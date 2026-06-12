@@ -12,7 +12,8 @@ import {
   Building,
   HelpCircle,
   Database,
-  Grid
+  Grid,
+  Sliders
 } from 'lucide-react';
 
 import { 
@@ -29,9 +30,10 @@ import ExecutiveOverview from './components/ExecutiveOverview';
 import BuildIQ from './components/BuildIQ';
 import FinanceFlow from './components/FinanceFlow';
 import Reconciliation from './components/Reconciliation';
+import StrategicPlan from './components/StrategicPlan';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'overview' | 'buildiq' | 'financeflow' | 'reconciliation'>('overview');
+  const [currentView, setCurrentView] = useState<'overview' | 'strategic' | 'buildiq' | 'financeflow' | 'reconciliation'>('overview');
   
   // App-level state for real-time interactivity
   const [spes, setSpes] = useState(mockSPEs);
@@ -112,7 +114,7 @@ export default function App() {
     }
   };
 
-  const handleNavigate = (view: 'overview' | 'buildiq' | 'financeflow' | 'reconciliation') => {
+  const handleNavigate = (view: 'overview' | 'strategic' | 'buildiq' | 'financeflow' | 'reconciliation') => {
     setCurrentView(view);
     setMobileMenuOpen(false);
   };
@@ -120,6 +122,7 @@ export default function App() {
   // Menu items list
   const navItems = [
     { id: 'overview', name: 'Dashboard Consolidado', icon: LayoutDashboard },
+    { id: 'strategic', name: 'Planejamento e Projeções (F5)', icon: Sliders },
     { id: 'buildiq', name: 'Módulo BuildIQ (Obras)', icon: Building2 },
     { id: 'financeflow', name: 'Módulo FinanceFlow', icon: Coins },
     { id: 'reconciliation', name: 'Reconciliação Patrimonial', icon: Scale },
@@ -279,6 +282,10 @@ export default function App() {
                   onNavigateToView={handleNavigate}
                   onSelectSPE={handleSelectSPE}
                 />
+              )}
+
+              {currentView === 'strategic' && (
+                <StrategicPlan />
               )}
 
               {currentView === 'buildiq' && (
