@@ -1,0 +1,6 @@
+{
+  "name": "Just Intelligence",
+  "description": "Plataforma proprietária de inteligência estratégica para a Construtora Just, articulando os módulos BuildIQ (desempenho de obras), FinanceFlow (liquidez e SPEs) e Reconciliação Patrimonial.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
