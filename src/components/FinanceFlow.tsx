@@ -107,11 +107,11 @@ export default function FinanceFlow({
     } else {
       totalEntradas = activeFCEntity.items
         .filter(i => i.section === 'ENTRADAS' && !i.is_total && !i.is_saldo)
-        .reduce((sum, item) => sum + item.realized_tot + item.sar, 0);
+        .reduce((sum, item) => sum + item.realizado_tot + item.sar, 0);
 
       totalSaidas = activeFCEntity.items
         .filter(i => i.section === 'SAÍDAS' && !i.is_total && !i.is_saldo)
-        .reduce((sum, item) => sum + item.realized_tot + item.sar, 0);
+        .reduce((sum, item) => sum + item.realizado_tot + item.sar, 0);
     }
 
     const netResultNum = totalEntradas - totalSaidas;
@@ -441,7 +441,7 @@ export default function FinanceFlow({
                         );
                       })}
                       <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900 bg-slate-50">
-                        {formatReais(item.realized_tot + item.sar)}
+                        {formatReais(item.realizado_tot + item.sar)}
                       </td>
                     </tr>
                   ))}
@@ -459,7 +459,7 @@ export default function FinanceFlow({
                         );
                       })}
                       <td className="py-3 px-4 text-right font-extrabold bg-emerald-100/55 text-emerald-900">
-                        {formatReais(totalEntriesRow.realized_tot + totalEntriesRow.sar)}
+                        {formatReais(totalEntriesRow.realizado_tot + totalEntriesRow.sar)}
                       </td>
                     </tr>
                   )}
@@ -482,7 +482,7 @@ export default function FinanceFlow({
                         );
                       })}
                       <td className="py-2.5 px-4 text-right font-bold font-mono text-red-750 bg-slate-50">
-                        ({formatReais(item.realized_tot + item.sar)})
+                        ({formatReais(item.realizado_tot + item.sar)})
                       </td>
                     </tr>
                   ))}
@@ -500,7 +500,7 @@ export default function FinanceFlow({
                         );
                       })}
                       <td className="py-3 px-4 text-right font-extrabold bg-rose-100/55 text-red-950">
-                        ({formatReais(totalExitsRow.realized_tot + totalExitsRow.sar)})
+                        ({formatReais(totalExitsRow.realizado_tot + totalExitsRow.sar)})
                       </td>
                     </tr>
                   )}
@@ -519,7 +519,7 @@ export default function FinanceFlow({
                         );
                       })}
                       <td className="py-3 px-4 text-right font-extrabold bg-slate-250 bg-slate-200 text-slate-900">
-                        {netDiffRow.realized_tot + netDiffRow.sar >= 0 ? '+' : ''}{formatReais(netDiffRow.realized_tot + netDiffRow.sar)}
+                        {netDiffRow.realizado_tot + netDiffRow.sar >= 0 ? '+' : ''}{formatReais(netDiffRow.realizado_tot + netDiffRow.sar)}
                       </td>
                     </tr>
                   )}

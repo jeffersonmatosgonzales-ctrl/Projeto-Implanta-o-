@@ -13,7 +13,8 @@ import {
   HelpCircle,
   Database,
   Grid,
-  Sliders
+  Sliders,
+  Bot
 } from 'lucide-react';
 
 import { 
@@ -31,6 +32,7 @@ import BuildIQ from './components/BuildIQ';
 import FinanceFlow from './components/FinanceFlow';
 import Reconciliation from './components/Reconciliation';
 import StrategicPlan from './components/StrategicPlan';
+import ClaudeContextView from './components/ClaudeContextView';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'overview' | 'strategic' | 'buildiq' | 'financeflow' | 'reconciliation'>('overview');
@@ -44,6 +46,32 @@ export default function App() {
   
   const [selectedSpeId, setSelectedSpeId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Claude context view state & sync managers
+  const [showClaudeView, setShowClaudeView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).has('claude');
+    }
+    return false;
+  });
+
+  const handleCloseClaudeView = () => {
+    setShowClaudeView(false);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('claude');
+      window.history.pushState({}, '', url.pathname + url.search);
+    }
+  };
+
+  const handleOpenClaudeView = () => {
+    setShowClaudeView(true);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('claude', 'true');
+      window.history.pushState({}, '', url.pathname + url.search);
+    }
+  };
 
   // Interaction handlers
   const handleAddTransacao = (newTx: Omit<TransacaoFinanceira, 'id'>) => {
@@ -107,6 +135,128 @@ export default function App() {
     }));
   };
 
+  /**
+   * Real-time Fiduciary Wheel Simulation Handler
+   * Promotes/demotes real estate development stages, recalculating POC and balance sheet dynamics instantly.
+   */
+  const handleUpdateObraEstagio = (obraId: string, novoEstagio: 'Previsto' | 'Em Construção' | 'Em Repasse' | 'Em Garantia') => {
+    let associarCNPJ = '48.223.490/0001-01'; // Default CNPJ
+    
+    // 1. Update Obras State
+    setObras(prevObras => prevObras.map(o => {
+      if (o.id === obraId) {
+        let status: 'Planejamento' | 'Em Construção' | 'Finalizada' | 'Atrasada' = 'Planejamento';
+        let progFisico = o.progressoFisico;
+        let progFinanc = o.progressoFinanceiro;
+        let custoReal = o.custoRealizado;
+
+        if (novoEstagio === 'Previsto') {
+          status = 'Planejamento';
+          progFisico = 0;
+          progFinanc = 0;
+          custoReal = 0;
+        } else if (novoEstagio === 'Em Construção') {
+          status = 'Em Construção';
+          progFisico = o.progressoFisico === 0 ? 15 : o.progressoFisico;
+          progFinanc = o.progressoFinanceiro === 0 ? 12 : o.progressoFinanceiro;
+          custoReal = o.custoRealizado === 0 ? 5000000 : o.custoRealizado;
+        } else if (novoEstagio === 'Em Repasse') {
+          status = 'Finalizada';
+          progFisico = 100;
+          progFinanc = 100;
+          custoReal = o.orcamentoTotal;
+        } else if (novoEstagio === 'Em Garantia') {
+          status = 'Finalizada';
+          progFisico = 100;
+          progFinanc = 100;
+          custoReal = o.orcamentoTotal;
+        }
+
+        return {
+          ...o,
+          estagio: novoEstagio,
+          status,
+          progressoFisico: progFisico,
+          progressoFinanceiro: progFinanc,
+          custoRealizado: custoReal
+        };
+      }
+      return o;
+    }));
+
+    // 2. Adjust or create associated SPE properties
+    setSpes(prevSpes => {
+      const matchObra = obras.find(o => o.id === obraId);
+      if (!matchObra) return prevSpes;
+
+      // Check if SPE exists
+      const speExists = prevSpes.some(s => s.id === matchObra.speId);
+
+      if (speExists) {
+        return prevSpes.map(s => {
+          if (s.id === matchObra.speId) {
+            let statusFisicoGeral = s.statusFisicoGeral;
+            let caixaAtual = s.caixaAtual;
+            let despesaRealizada = s.despesaRealizada;
+
+            if (novoEstagio === 'Previsto') {
+              statusFisicoGeral = 0;
+            } else if (novoEstagio === 'Em Construção') {
+              statusFisicoGeral = statusFisicoGeral === 0 ? 15 : statusFisicoGeral;
+            } else if (novoEstagio === 'Em Repasse' || novoEstagio === 'Em Garantia') {
+              statusFisicoGeral = 100;
+              caixaAtual = caixaAtual + 4500000; // Liquidate assets simulation increase
+            }
+
+            return {
+              ...s,
+              statusFisicoGeral,
+              caixaAtual
+            };
+          }
+          return s;
+        });
+      } else {
+        // If it's a dynamic launch from strategic tab (e.g. Aurora SPE creation simulation)
+        if (novoEstagio === 'Em Construção') {
+          const newSpeId = matchObra.speId === 'Planejado' ? `spe-${obraId.split('-')[1]}` : matchObra.speId;
+          const newSpeName = matchObra.speNome === 'Planejado' ? `SPE ${matchObra.nome} Ltda` : matchObra.speNome;
+          
+          const newSpeRecord = {
+            id: newSpeId,
+            nome: newSpeName,
+            cnpj: '55.123.' + String(Math.floor(Math.random() * 900) + 100) + '/0001-99',
+            participacaoJust: 85,
+            caixaAtual: 3500000,
+            receitaProjetada: matchObra.receitaTotalContratada || 28000000,
+            receitaRecebida: 0,
+            despesaRealizada: 1000000,
+            distribuidoAcumulado: 0,
+            statusFisicoGeral: 15,
+            alavancagemBancaria: 5000000,
+            estoqueAVender: 20000000,
+            imoveisEntreguesReceber: 5000000,
+            contasAPagarFornecedores: 500000
+          };
+          return [...prevSpes, newSpeRecord];
+        }
+      }
+      return prevSpes;
+    });
+
+    // 3. Inform automated smart broker agents
+    setAgents(prev => prev.map(agent => {
+      if (agent.id === 'agent-fluxo') {
+        return {
+          ...agent,
+          itensProcessadosHoje: agent.itensProcessadosHoje + 1,
+          ultimaExtracao: 'Hoje, ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+        };
+      }
+      return agent;
+    }));
+  };
+
   const handleSelectSPE = (speId: string | null) => {
     setSelectedSpeId(speId);
     if (speId) {
@@ -141,9 +291,19 @@ export default function App() {
           <span className="text-slate-600">|</span>
           <span className="hidden md:inline">Instalação: Construtora Just S/A - Ambientes de SPE Integrados</span>
         </div>
-        <div className="font-mono text-slate-500 flex items-center gap-2">
-          <span>Relógio Geral: 12 Jun 2026</span>
-          <span className="bg-slate-800 text-slate-300 px-1 rounded text-[9.5px]">UTC-3</span>
+        <div className="flex items-center gap-4">
+          <div className="font-mono text-slate-500 flex items-center gap-2">
+            <span>Relógio Geral: 12 Jun 2026</span>
+            <span className="bg-slate-800 text-slate-300 px-1 rounded text-[9.5px]">UTC-3</span>
+          </div>
+          <button
+            onClick={handleOpenClaudeView}
+            className="flex items-center gap-1 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/30 text-[10.5px] font-bold px-2 py-0.5 rounded-md cursor-pointer transition select-none"
+            title="Abrir Central de Sincronização de Contexto para Claude / LLMs"
+          >
+            <Bot className="w-3 h-3 text-orange-400 animate-pulse" />
+            <span>Sincronizar Claude</span>
+          </button>
         </div>
       </div>
 
@@ -210,6 +370,15 @@ export default function App() {
               </div>
               <p className="text-[9px] text-slate-500">Acesso via Token Seguro CVM</p>
             </div>
+
+            <button
+              onClick={handleOpenClaudeView}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-orange-500/10 hover:bg-orange-500/15 text-orange-400 border border-orange-500/25 hover:border-orange-500/40 rounded-xl text-xs font-bold transition cursor-pointer select-none"
+              title="Sincronizar dados e gerar contexto rico para Claude / ChatGPT"
+            >
+              <Bot className="w-4 h-4 text-orange-400" />
+              <span>Sincronizar c/ Claude</span>
+            </button>
           </div>
         </aside>
 
@@ -266,53 +435,68 @@ export default function App() {
         {/* Strategic Dashboard Workspace Area */}
         <main className="flex-1 p-4 md:p-8 overflow-y-auto max-w-[1400px] mx-auto w-full transition-all duration-300 pb-20 md:pb-8">
           
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentView}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
-            >
-              {currentView === 'overview' && (
-                <ExecutiveOverview 
-                  spes={spes}
-                  obras={obras}
-                  agents={agents}
-                  onNavigateToView={handleNavigate}
-                  onSelectSPE={handleSelectSPE}
-                />
-              )}
+          {showClaudeView ? (
+            <ClaudeContextView 
+              spes={spes}
+              obras={obras}
+              transacoes={transacoes}
+              records={records}
+              agents={agents}
+              onClose={handleCloseClaudeView}
+            />
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentView}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.25 }}
+              >
+                {currentView === 'overview' && (
+                  <ExecutiveOverview 
+                    spes={spes}
+                    obras={obras}
+                    agents={agents}
+                    records={records}
+                    onNavigateToView={handleNavigate}
+                    onSelectSPE={handleSelectSPE}
+                  />
+                )}
 
-              {currentView === 'strategic' && (
-                <StrategicPlan />
-              )}
+                {currentView === 'strategic' && (
+                  <StrategicPlan />
+                )}
 
-              {currentView === 'buildiq' && (
-                <BuildIQ 
-                  obras={obras}
-                  onBackToOverview={() => handleNavigate('overview')}
-                />
-              )}
+                {currentView === 'buildiq' && (
+                  <BuildIQ 
+                    obras={obras}
+                    onBackToOverview={() => handleNavigate('overview')}
+                  />
+                )}
 
-              {currentView === 'financeflow' && (
-                <FinanceFlow 
-                  spes={spes}
-                  transacoes={transacoes}
-                  onAddTransacao={handleAddTransacao}
-                  selectedSpeId={selectedSpeId}
-                  onSelectSPE={setSelectedSpeId}
-                />
-              )}
+                {currentView === 'financeflow' && (
+                  <FinanceFlow 
+                    spes={spes}
+                    transacoes={transacoes}
+                    onAddTransacao={handleAddTransacao}
+                    selectedSpeId={selectedSpeId}
+                    onSelectSPE={setSelectedSpeId}
+                  />
+                )}
 
-              {currentView === 'reconciliation' && (
-                <Reconciliation 
-                  records={records}
-                  onCorrectDivergence={handleCorrectDivergence}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+                {currentView === 'reconciliation' && (
+                  <Reconciliation 
+                    records={records}
+                    onCorrectDivergence={handleCorrectDivergence}
+                    obras={obras}
+                    spes={spes}
+                    onUpdateObraEstagio={handleUpdateObraEstagio}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
 
         </main>
       </div>

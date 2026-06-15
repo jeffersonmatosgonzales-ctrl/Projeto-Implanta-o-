@@ -4,10 +4,10 @@ export interface Obra {
   speId: string;
   speNome: string;
   localizacao: string;
-  progressoFisico: number; // percentage
+  progressoFisico: number; // percentage (PoC)
   progressoFinanceiro: number; // percentage
-  orcamentoTotal: number; // em R$
-  custoRealizado: number; // em R$
+  orcamentoTotal: number; // em R$ (Custo Total Orçado)
+  custoRealizado: number; // em R$ (Custo Realizado Acumulado)
   vendasProgresso: number; // percentage of units sold
   custoOrcadoMetroQuadrado: number; // R$/m²
   custoRealMetroQuadrado: number; // R$/m²
@@ -17,13 +17,16 @@ export interface Obra {
   dataInicio: string;
   dataEntrega: string;
   status: 'Planejamento' | 'Em Construção' | 'Finalizada' | 'Atrasada';
+  estagio: 'Previsto' | 'Em Construção' | 'Em Repasse' | 'Em Garantia'; // Novo atributo de fluxo dinâmico
+  receitaTotalContratada?: number; // VGV total assinado
+  valorTerreno?: number; // Custo de aquisição do terreno associado
 }
 
 export interface SPE {
   id: string;
   nome: string;
   cnpj: string;
-  participacaoJust: number; // ex: 80 (%)
+  participacaoJust: number; // ex: 85 (%)
   caixaAtual: number;
   receitaProjetada: number;
   receitaRecebida: number;
@@ -31,6 +34,9 @@ export interface SPE {
   distribuidoAcumulado: number;
   statusFisicoGeral: number; // avg physical progress of associated Obras
   alavancagemBancaria: number; // Debt ratio or financing R$
+  estoqueAVender?: number; // Ativo de unidades não-comercializadas
+  imoveisEntreguesReceber?: number; // Carteira a receber pós-chaves
+  contasAPagarFornecedores?: number; // Exigível circulante
 }
 
 export interface TransacaoFinanceira {

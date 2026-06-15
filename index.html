@@ -1,13 +1,628 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plataforma Just — Maquete v4</title>
+<style>
+  :root{
+    --navy:#1B3A4B; --ink:#23303A; --amber:#C9742E; --teal:#2E8B76; --blue:#3D6B8A;
+    --muted:#5C6A72; --line:#DCE3E7; --paper:#F4F2ED; --card:#FFFFFF; --green:#1D6B4F;
+    --red:#B0392E; --soft:#EEF2F1;
+    --serif:Georgia,'Times New Roman',serif; --sans:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.5;-webkit-font-smoothing:antialiased}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
+  .topbar{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:3px solid var(--amber)}
+  .brand{display:flex;align-items:baseline;gap:8px}
+  .brand .logo{font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:.5px}
+  .brand .sa{font-family:var(--mono);font-size:10px;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:1px 5px;letter-spacing:1px}
+  .brand .tag{font-size:10px;color:#9FB2BC;text-transform:uppercase;letter-spacing:2px;margin-left:4px}
+  .src{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:10.5px;color:#9FB2BC}
+  .src .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;margin-right:5px}
+  .src b{color:#cdd8dd;font-weight:600}
+  @media(max-width:760px){.src .hidem{display:none}}
+
+  .shell{display:flex;min-height:calc(100vh - 47px)}
+  .nav{width:230px;background:#16323F;color:#cdd8dd;flex-shrink:0;padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+  .nav .eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;color:#6f8893;text-transform:uppercase;margin:6px 10px 8px}
+  .nav button{width:100%;text-align:left;background:none;border:none;color:#b6c6cd;font-family:var(--sans);font-size:13px;font-weight:600;padding:11px 12px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s,color .15s}
+  .nav button .ic{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+  .nav button:hover{background:#1f4150;color:#fff}
+  .nav button.active{background:var(--amber);color:#fff;font-weight:700}
+  .nav button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .nav .foot{margin-top:auto;border-top:1px solid #234653;padding-top:14px;font-size:11px;color:#7f97a1}
+  .nav .foot b{color:#cdd8dd}
+
+  .main{flex:1;padding:24px 30px 60px;max-width:1200px;overflow-x:hidden}
+  @media(max-width:760px){
+    .shell{flex-direction:column}
+    .nav{width:100%;flex-direction:row;overflow-x:auto;padding:10px;gap:6px}
+    .nav .eyebrow,.nav .foot{display:none}
+    .nav button{width:auto;white-space:nowrap;padding:9px 12px;font-size:12px}
+    .main{padding:18px 16px 50px}
+  }
+
+  .view{display:none}.view.on{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .eyebrow2{font-family:var(--mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);font-weight:700}
+  h1{font-family:var(--serif);font-size:26px;color:var(--navy);font-weight:700;margin:3px 0 4px;line-height:1.15}
+  .lede{color:var(--muted);font-size:14px;max-width:780px;margin-bottom:18px}
+  h2.sec{font-family:var(--serif);font-size:16px;color:var(--navy);margin:22px 0 11px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.55}.note b{color:var(--ink)}
+
+  /* tabs within module */
+  .tabs{display:flex;gap:6px;background:#e7ebe9;padding:4px;border-radius:11px;margin-bottom:16px;flex-wrap:wrap}
+  .tab{border:none;background:none;font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer;transition:.15s}
+  .tab:hover{color:var(--navy)}
+  .tab.on{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.08);font-weight:700}
+  .tab:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+  .pane{display:none}.pane.on{display:block}
+  .obsel{border:none;background:none;font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer}
+  .obsel.on{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.08);font-weight:700}
+  .obsel:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+  .flag{font-size:10.5px;font-weight:700;padding:4px 11px;border-radius:20px;border:none;cursor:pointer;transition:.15s}
+  .flag.prev{background:#e8eff5;color:#2e597a}.flag.prev:hover{background:#d8e6f1}
+  .flag.exec{background:#e6f1ec;color:#1d6b4f;cursor:default}
+
+  .grid{display:grid;gap:13px}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:880px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}}
+  @media(max-width:560px){.g4,.g2{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 15px;border-top:3px solid var(--line)}
+  .kpi.amber{border-top-color:var(--amber)}.kpi.teal{border-top-color:var(--teal)}.kpi.blue{border-top-color:var(--blue)}.kpi.navy{border-top-color:var(--navy)}.kpi.red{border-top-color:var(--red)}
+  .kpi .lab{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .kpi .val{font-family:var(--serif);font-size:22px;color:var(--navy);font-weight:700;margin-top:5px;line-height:1}
+  .kpi .sub{font-size:11px;color:var(--muted);margin-top:5px}.kpi .sub .up{color:var(--green);font-weight:700}.kpi .sub .down{color:var(--red);font-weight:700}
+
+  .lenses{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+  @media(max-width:880px){.lenses{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.lenses{grid-template-columns:1fr}}
+  .lens{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--card);position:relative;overflow:hidden}
+  .lens::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .lens.biq::before{background:var(--amber)}.lens.ff::before{background:var(--teal)}.lens.pl::before{background:var(--blue)}.lens.drp::before{background:var(--navy)}
+  .lens .mname{font-size:12px;font-weight:700;color:var(--navy)}.lens .mname span{font-family:var(--mono);font-size:9px;color:var(--muted);font-weight:600}
+  .lens .reading{font-family:var(--serif);font-size:19px;color:var(--navy);font-weight:700;margin:6px 0 2px}
+  .lens .rl{font-size:10.5px;color:var(--muted)}
+  .sienge{margin-top:11px;background:var(--navy);color:#dbe5e9;border-radius:11px;padding:11px 15px;font-size:12px;display:flex;align-items:center;gap:9px}
+  .sienge b{color:var(--amber)}.sienge .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;font-weight:600;font-size:11.5px}
+  th.r,td.r{text-align:right}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);color:var(--ink)}
+  tbody tr:last-child td{border-bottom:none}
+  .grp td{background:var(--soft);font-weight:700;color:var(--navy);font-size:11.5px}
+  .ind td:first-child{padding-left:22px;color:var(--muted)}
+  tfoot td{background:#10303d;color:#fff;font-weight:700}
+  .sub-tot td{background:#eef2f4;font-weight:700;color:var(--navy)}
+  .pos{color:var(--green);font-weight:600}.neg{color:var(--red);font-weight:600}.mono{font-family:var(--mono)}
+
+  .badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px;display:inline-block}
+  .b-obra{background:#fbeee0;color:#9a5410}.b-conc{background:#e6f1ec;color:#1d6b4f}.b-spe{background:#e8eff5;color:#2e597a}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:11px}
+  .metrics .m{background:var(--soft);border-radius:9px;padding:8px 10px}
+  .metrics .m .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .metrics .m .v{font-family:var(--serif);font-size:16px;color:var(--navy);font-weight:700;margin-top:2px}
+  .metrics .m .v.tl{color:var(--teal)}.metrics .m .v.rd{color:var(--red)}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px;margin-bottom:10px}
+  .bridge{background:linear-gradient(90deg,#16323F,#24505F);color:#fff;border-radius:12px;padding:14px 16px;margin-top:14px;font-size:12.5px;line-height:1.55}.bridge b{color:var(--amber)}
+  .disc{font-size:11px;color:var(--muted);font-style:italic;margin-top:18px;border-top:1px dashed var(--line);padding-top:10px}
+  .alert{background:#fbeee0;border-left:3px solid var(--amber);border-radius:8px;padding:9px 12px;font-size:12px;color:#7a4410;margin-top:11px}
+  .promo{font-size:11px;font-weight:700;color:#fff;background:var(--teal);border:none;border-radius:8px;padding:7px 13px;cursor:pointer;transition:.15s}
+  .promo:hover{filter:brightness(.92)}
+  .promo.exec{background:var(--amber)}
+  .filterbar{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+  .fbtn{font-size:11px;font-weight:600;color:var(--muted);background:#eef2f1;border:1px solid var(--line);border-radius:7px;padding:5px 11px;cursor:pointer}
+  .fbtn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><span class="logo">Just</span><span class="sa">S.A.</span><span class="tag">Construtora e Incorporadora</span></div>
+  <div class="src"><span><span class="dot"></span>Camada 0: <b>Sienge</b></span><span class="hidem">· <b>Prevision</b> · <b>Bradesco</b></span><span class="hidem">Maquete v4 · ciclo de vida vivo</span></div>
+</div>
+<div class="shell">
+  <nav class="nav">
+    <div class="eyebrow">Plataforma</div>
+    <button class="active" data-v="overview"><span class="ic" style="background:#9FB2BC"></span>Visão Consolidada</button>
+    <button data-v="plano"><span class="ic" style="background:var(--blue)"></span>Planejamento</button>
+    <button data-v="buildiq"><span class="ic" style="background:var(--amber)"></span>BuildIQ — Obras</button>
+    <button data-v="finance"><span class="ic" style="background:var(--teal)"></span>FinanceFlow — Caixa</button>
+    <button data-v="drp"><span class="ic" style="background:#cdd8dd"></span>Resultado DRP</button>
+    <button data-v="dre"><span class="ic" style="background:#b9c6cc"></span>Resultado DRE</button>
+    <button data-v="ia"><span class="ic" style="background:#C9742E"></span>Relatório Executivo</button>
+    <div class="foot">Cada módulo <b>lê o Sienge</b> e conversa com os outros por <b>exportação</b>. Promova uma obra e veja o status viajar entre os módulos.</div>
+  </nav>
+  <main class="main">
+
+    <section class="view on" id="overview">
+      <div class="eyebrow2" style="color:#6f8893">Visão Consolidada</div>
+      <h1>O grupo Just num olhar</h1>
+      <p class="lede">A camada de inteligência sobre o Sienge: a saúde das obras (custo × prazo), o caixa por entidade e o estágio de cada empreendimento no ciclo de vida.</p>
+      <div id="ov-c"></div>
+      <p class="disc">Maquete de validação — dados reais de abr–mai/26 (Sienge); projeções ilustrativas. Não é o sistema; é o mapa do que será construído.</p>
+    </section>
+
+    <section class="view" id="buildiq">
+      <div class="eyebrow2" style="color:var(--amber)">Módulo 1 · BuildIQ</div>
+      <h1>Gestão das obras em execução</h1>
+      <p class="lede">Só obras <b>em execução</b>. Promova uma obra para <b>repasse</b> e ela sai daqui e aparece no Resultado DRP.</p>
+      <div id="biq-filter" class="filterbar"></div>
+      <div id="biq-sel" style="display:flex;gap:4px;background:#e7ebe9;padding:4px;border-radius:10px;width:fit-content;margin:10px 0 16px;flex-wrap:wrap"></div>
+      <div id="biq-c"></div>
+    </section>
+
+    <section class="view" id="finance">
+      <div class="eyebrow2" style="color:var(--teal)">Módulo 2 · FinanceFlow</div>
+      <h1>FC 2026 — tesouraria multi-entidade</h1>
+      <p class="lede">Cada entidade é um caixa distincto. Realizado Jan–Mai, projetado Jun–Dez. <b>Caixa é só caixa</b> — apuração de resultado é nos módulos de Resultado.</p>
+      <div id="ff-c"></div>
+    </section>
+
+    <section class="view" id="plano">
+      <div class="eyebrow2" style="color:var(--blue)">Módulo 3 · Planejamento</div>
+      <h1>O universo projetado — horizonte rolante</h1>
+      <p class="lede">Obras em andamento (o que falta), lançamentos futuros, a Just matriz com seus centros e os empréstimos. Promova um lançamento para <b>execução</b> e veja-o aparecer no BuildIQ.</p>
+      <div id="plano-filter" class="filterbar"></div>
+      <div id="plano-c" style="margin-top:12px"></div>
+    </section>
+
+    <section class="view" id="drp">
+      <div class="eyebrow2" style="color:var(--navy)">Módulo 4 · Resultado DRP</div>
+      <h1>Resultado do projeto — uma DRP por obra</h1>
+      <p class="lede"><b>Em execução</b>: projetado por POC. <b>Em repasse</b>: reconciliação por eventos. Promova uma obra em repasse para <b>garantia</b> e ela migra para a construtora.</p>
+      <div id="drp-sel" style="display:flex;gap:4px;background:#e7ebe9;padding:4px;border-radius:10px;width:fit-content;margin-bottom:16px;flex-wrap:wrap"></div>
+      <div id="drp-c"></div>
+      <p class="note" style="margin-top:16px">POC = Percentual de Obra Concluída = custo realizado (Sienge) ÷ custo total corrigido (IPC). O resultado é reconhecido nessa proporção e iguala a viabilidade em 100%.</p>
+    </section>
+
+    <section class="view" id="dre">
+      <div class="eyebrow2" style="color:var(--navy)">Módulo 4 · Resultado DRE</div>
+      <h1>Resultado da construtora Just</h1>
+      <p class="lede">Outra demonstração, que não se mistura com a do projeto. Em competência (não em caixa). Inclui o gasto de garantia das obras entregues — a Just é a responsável técnica.</p>
+      <div id="dre-c"></div>
+    </section>
+
+    <section class="view" id="ia">
+      <div class="eyebrow2" style="color:var(--amber)">Camada de inteligência</div>
+      <h1>Relatório Executivo — IA Analítica</h1>
+      <p class="lede">A leitura de cima de tudo: diagnóstico do grupo, pontos de atenção, ações corretivas e cenários — em linguagem de decisão, não de planilha.</p>
+      <div id="ia-c"></div>
+      <p class="disc">Diagnóstico ilustrativo sobre os dados da maquete. No sistema real, a inteligência lê o estado consolidado dos módulos e responde em linguagem natural.</p>
+    </section>
+
+  </main>
+</div>
+<script>
+var D={
+  matera:{nome:'Matera Residence',tipo:'SPE em parceria',ipc:1.0392,ipp:0.9955,exec:'38,9%',
+    poc:0.38,custoReal:23.13,custoTotal:60.87,vgvN:65.81,resViab:4.94,margem:'7,51%',
+    vendido:'R$ 36,9 mi',unid:'31',estoque:'23 un.',inad:'R$ 63,5 mil',
+    via:[['Valor Global de Venda (VGV)','63,63','65,81','main'],
+         ['(\u2212) Impostos + despesas com vendas','7,89','8,26','main'],
+         ['(\u2212) Despesas operacionais (custo direto+indireto, taxa adm)','39,39','39,84','main'],
+         ['(\u2212) Terrenos','2,00','2,00','main'],
+         ['(\u2212) Despesas financeiras (juros)','4,79','10,76','warn'],
+         ['= Custo total do projeto','54,06','60,87','sub'],
+         ['= Resultado l\u00edquido','9,57','4,94','tot']]},
+  blank:{nome:'Blank',tipo:'SPE em parceria',ipc:0.98,ipp:1.01,exec:'22%',
+    poc:0.22,custoReal:7.77,custoTotal:35.34,vgvN:39.12,resViab:3.78,margem:'9,66%',
+    vendido:'R$ 12,45 mi',unid:'14',estoque:'22 un.',inad:'R$ 22,0 mil',
+    via:[['Valor Global de Venda (VGV)','38,45','39,12','main'],
+         ['(\u2212) Impostos + despesas com vendas','4,77','4,91','main'],
+         ['(\u2212) Despesas operacionais','24,35','24,78','main'],
+         ['(\u2212) Terrenos','1,80','1,80','main'],
+         ['(\u2212) Despesas financeiras (juros)','2,60','3,85','warn'],
+         ['= Custo total do projeto','33,51','35,34','sub'],
+         ['= Resultado l\u00edquido','4,94','3,78','tot']]},
+  neo:{nome:'Neo',tipo:'SPE em parceria',vgvN:42.00,custoTotal:36.60,resViab:5.40,margem:'12,86%',resRec:5.18,
+    ativo:[['Caixa no banco','1.250'],['Estoque a vender (3 un.)','2.640'],['Equipamentos','180'],['Clientes a receber','4.820']],
+    passivo:[['Contas a pagar \u2014 fornecedores','680'],['Cau\u00e7\u00e3o retida de contratos','220'],['Plano empres\u00e1rio \u2014 saldo devedor','3.900']],
+    residuais:[['Imposto sobre estoque a vender (RET 4%)','106'],['Comiss\u00e3o sobre estoque a vender','79']]},
+  traveza:{nome:'Trav\u00e9za Residence',tipo:'Incorp. exclusiva Just',resDistribuido:9.20,garantiaAno:'120'},
+  aurora:{nome:'Aurora',tipo:'Lan\u00e7amento previsto',vgvPrev:'48 mi',inicio:'2027'},
+  horizonte:{nome:'Horizonte',tipo:'Lan\u00e7amento previsto',vgvPrev:'62 mi',inicio:'2028'},
+  verta:{nome:'Verta',tipo:'Lan\u00e7amento previsto',vgvPrev:'35 mi',inicio:'2027'}
+};
+D.matera.resRec=4.94;D.matera.ativo=[['Caixa no banco','2.100'],['Estoque a vender (5 un.)','4.300'],['Equipamentos','260'],['Clientes a receber','7.400']];D.matera.passivo=[['Contas a pagar \u2014 fornecedores','1.100'],['Cau\u00e7\u00e3o retida de contratos','380'],['Plano empres\u00e1rio \u2014 saldo devedor','6.200']];D.matera.residuais=[['Imposto sobre estoque (RET 4%)','172'],['Comiss\u00e3o sobre estoque','129']];D.blank.resRec=3.78;D.blank.ativo=[['Caixa no banco','1.300'],['Estoque a vender (4 un.)','2.900'],['Equipamentos','150'],['Clientes a receber','4.100']];D.blank.passivo=[['Contas a pagar \u2014 fornecedores','620'],['Cau\u00e7\u00e3o retida de contratos','210'],['Plano empres\u00e1rio \u2014 saldo devedor','3.400']];D.blank.residuais=[['Imposto sobre estoque (RET 4%)','116'],['Comiss\u00e3o sobre estoque','87']];
+var S={obras:[
+  {id:'matera',status:'execucao'},{id:'blank',status:'execucao'},
+  {id:'neo',status:'repasse'},{id:'traveza',status:'garantia'},
+  {id:'aurora',status:'prevista'},{id:'horizonte',status:'prevista'},{id:'verta',status:'prevista'}
+],pf:'tudo',bf:'tudo',biqSel:null,drpSel:null,horizon:'longo'};
+
+var STAT={prevista:{l:'Prevista',c:'#2e597a',bg:'#e8eff5'},execucao:{l:'Em execu\u00e7\u00e3o',c:'#1d6b4f',bg:'#e6f1ec'},repasse:{l:'Em repasse',c:'#9a5b12',bg:'#FBEFD9'},garantia:{l:'Em garantia',c:'#7a4410',bg:'#fbeee0'}};
+var NEXT={prevista:'execucao',execucao:'repasse',repasse:'garantia'};
+var PREV={execucao:'prevista',repasse:'execucao',garantia:'repasse'};
+function revert(id){var o=S.obras.find(function(x){return x.id===id});if(PREV[o.status]){o.status=PREV[o.status];renderAll();}}
+
+function fname(id){return D[id].nome.split(' ')[0];}
+function st(id){var o=S.obras.find(function(x){return x.id===id});return o?o.status:null;}
+function withSt(arr){return S.obras.filter(function(o){return arr.indexOf(o.status)>=0});}
+function sbadge(s){var x=STAT[s];return '<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:'+x.bg+';color:'+x.c+'">'+x.l+'</span>';}
+function mi(n){return n.toFixed(2).replace('.',',')+' mi';}
+function pct(p){return Math.round(p*100)+'%';}
+function kpi(lab,val,sub,color){return '<div class="kpi '+color+'"><div class="lab">'+lab+'</div><div class="val">'+val+'</div><div class="sub">'+(sub||'')+'</div></div>';}
+function T(head,rows,textCols){textCols=textCols||[];
+  function cls(i){if(i===0)return '';return textCols.indexOf(i)>=0?'':'r mono';}
+  var h='<table><thead><tr>';head.forEach(function(x,i){h+='<th class="'+(i===0||textCols.indexOf(i)>=0?'':'r')+'">'+x+'</th>';});h+='</tr></thead><tbody>';
+  rows.forEach(function(r){h+='<tr>';r.forEach(function(c,i){h+='<td class="'+cls(i)+'">'+c+'</td>';});h+='</tr>';});
+  return h+'</tbody></table>';}
+
+function promote(id){var o=S.obras.find(function(x){return x.id===id});if(NEXT[o.status]){o.status=NEXT[o.status];renderAll();}}
+function setFilter(key,val){S[key]=val;renderAll();}
+function filterBar(key,val,stages){var opts=[['tudo','Tudo']];stages.forEach(function(st){opts.push([st,STAT[st].l]);});
+  var h='<span style="font-size:11px;color:var(--muted);font-weight:600;margin-right:4px">Filtro por est\u00e1gio:</span>';
+  opts.forEach(function(o){h+='<button class="fbtn'+(val===o[0]?' on':'')+'" onclick="setFilter(\''+key+'\',\''+o[0]+'\')">'+o[1]+'</button>';});
+  return h;}
+
+function alertRow(sev,title,desc){var c={alta:['#B0392E','#fbeee0'],media:['#9a5b12','#FBEFD9'],baixa:['#1d6b4f','#e6f1ec']}[sev];var lab={alta:'ALTA',media:'MÉDIA',baixa:'BAIXA'}[sev];return '<div style="display:flex;gap:10px;padding:11px 13px;border:1px solid var(--line);border-left:4px solid '+c[0]+';border-radius:10px;margin-bottom:9px;background:#fff"><span style="font-size:9px;font-weight:700;color:'+c[0]+';background:'+c[1]+';padding:3px 8px;border-radius:20px;height:fit-content;white-space:nowrap">'+lab+'</span><div><div style="font-size:13px;font-weight:700;color:var(--navy)">'+title+'</div><div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5">'+desc+'</div></div></div>';}
+function answerQuery(q){
+ q=(q||'').toLowerCase();
+ var ex=withSt(['execucao']), rp=withSt(['repasse']), gr=withSt(['garantia']);
+ if(/estoque|unidade/.test(q)){
+  return 'Maior estoque a vender hoje: <b>Matera</b>, com 23 unidades, seguida de Blank (22). O Neo, em repasse, tem 3 unidades restantes.';
+ }
+ if(/risco|amea\u00e7|pior|perigo|preocup/.test(q)){
+  return 'A obra de maior risco \u00e9 a <b>Matera</b>: os juros dobraram na \u00faltima revis\u00e3o e a margem caiu de 15% para 7,5%. \u00c9 o maior risco de resultado do grupo \u2014 recomendo priorizar a renegocia\u00e7\u00e3o do financiamento.';
+ }
+ if(/margem|lucrativ|rentab/.test(q)){
+  return 'Margens das obras: <b>Neo 12,86%</b> (maior), Blank 9,66% e <b>Matera 7,51%</b> (menor, pressionada pelos juros).';
+ }
+ if(/caixa|f\u00f4lego|folego|dinheiro|liquid/.test(q)){
+  return 'O caixa do grupo fecha o acumulado <b>positivo, mas com folga apertada</b> \u2014 sustentado por aportes e pela taxa de adm. O servi\u00e7o da d\u00edvida \u00e9 a maior sa\u00edda recorrente.';
+ }
+ if(/result|lucro|ganho/.test(q)){
+  return 'Resultado por obra: Matera 4,94 mi \u00b7 Blank 3,78 mi \u00b7 Neo 5,18 mi (reconhecido, em repasse). Resultado consolidado do grupo: R$ 1,21 mi \u2014 pressionado pelos juros da Matera.';
+ }
+ if(/juro|financ|d\u00edvida|divida/.test(q)){
+  return 'O ponto cr\u00edtico de juros \u00e9 a <b>Matera</b>: as despesas financeiras passaram de R$ 4,79 mi para R$ 10,76 mi na revis\u00e3o, derrubando a margem de 15% para 7,5%.';
+ }
+ if(/inadim|calote|atras/.test(q)){
+  return 'Inadimpl\u00eancia: Matera R$ 63,5 mil \u00b7 Blank R$ 22,0 mil. Importante: inadimpl\u00eancia afeta o caixa, mas n\u00e3o reduz o VGV.';
+ }
+ if(/vend|fatur/.test(q)){
+  return 'Vendas: Matera R$ 36,9 mi (31 unidades) \u00b7 Blank R$ 12,45 mi (14 unidades).';
+ }
+ if(/garantia/.test(q)){
+  var ng=gr.map(function(o){return fname(o.id)});
+  return gr.length? 'Em garantia (manuten\u00e7\u00e3o p\u00f3s-obra, na construtora): <b>'+ng.join(', ')+'</b>.' : 'Nenhuma obra em garantia no momento.';
+ }
+ if(/repasse/.test(q)){
+  var nr=rp.map(function(o){return fname(o.id)});
+  return rp.length? 'Em repasse: <b>'+nr.join(', ')+'</b>. O resultado vira definitivo quando o estoque for vendido e os receb\u00edveis liquidados.' : 'Nenhuma oobra em repasse no momento.';
+ }
+ if(/execu|andamento|construindo/.test(q)){
+  var ne=ex.map(function(o){return fname(o.id)});
+  return ex.length? 'Em execu\u00e7\u00e3o: <b>'+ne.join(', ')+'</b> \u2014 acompanhadas por IPC (custo) e IPP (prazo) no BuildIQ.' : 'Nenhuma obra em execu\u00e7\u00e3o no momento.';
+ }
+ return 'Posso responder sobre: estoque, margem, resultado, caixa, juros, inadimpl\u00eancia, vendas e o est\u00e1gio das obras (execu\u00e7\u00e3o, repasse, garantia). Tente, por exemplo: "qual obra tem mais estoque" ou "como est\u00e1 a margem".';
+}
+function iaRespond(q){
+ if(!q||!q.trim()){document.getElementById('ia-ans').innerHTML='';return;}
+ var a=answerQuery(q);
+ document.getElementById('ia-ans').innerHTML='<div style="background:#16323F;color:#dbe5e9;border-radius:11px;padding:13px 15px;font-size:12.5px;line-height:1.6;margin-top:10px"><div style="font-size:11px;color:#9fb2bc;margin-bottom:6px">Voc\u00ea perguntou: \u201c'+q.replace(/</g,"&lt;")+'\u201d</div><span style="font-size:9px;font-weight:700;color:var(--amber);letter-spacing:1px">RESPOSTA DA IA</span><div style="margin-top:6px">'+a+'</div></div>';
+}
+function iaChip(q){var el=document.getElementById('ia-input');if(el)el.value=q;iaRespond(q);}
+function qaBlock(){
+ var h='<h2 class="sec">Pergunte \u00e0 intelig\u00eancia</h2><div class="card">';
+ h+='<div style="display:flex;gap:8px;align-items:center;background:var(--soft);border-radius:10px;padding:9px 12px"><span style="color:var(--muted);font-size:14px">\u2709</span><input id="ia-input" type="text" placeholder="Ex.: qual obra tem mais estoque?" onkeydown="if(event.key===\'Enter\')iaRespond(this.value)" style="flex:1;border:none;background:none;font-family:var(--sans);font-size:13px;color:var(--ink);outline:none"><button class="promo" onclick="iaRespond(document.getElementById(\'ia-input\').value)">Perguntar</button></div>';
+ h+='<div style="margin-top:10px;font-size:11px;color:var(--muted)">Exemplos: <button class="fbtn" onclick="iaChip(\'qual obra tem mais estoque\')">mais estoque</button> <button class="fbtn" onclick="iaChip(\'qual a obra de maior risco\')">maior risco</button> <button class="fbtn" onclick="iaChip(\'como est\u00e1 a margem das obras\')">margem</button> <button class="fbtn" onclick="iaChip(\'como est\u00e1 o caixa do grupo\')">caixa</button></div>';
+ h+='<div id="ia-ans"></div></div>';
+ return h;
+}
+function renderIA(){
+ var ex=withSt(['execucao']),rp=withSt(['repasse']),gr=withSt(['garantia']),pv=withSt(['prevista']);
+ var h='<div class="card" style="border-left:4px solid var(--amber)"><div style="display:flex;align-items:center;gap:9px;margin-bottom:9px"><span style="font-size:9px;font-weight:700;color:#fff;background:linear-gradient(90deg,var(--amber),#9a5b12);padding:4px 10px;border-radius:20px;letter-spacing:1px">IA ANAL\u00cdTICA</span><b style="color:var(--navy);font-family:var(--serif);font-size:15px">Diagn\u00f3stico geral</b></div>';
+ h+='<p style="font-size:13px;line-height:1.65;color:var(--ink)">O grupo opera com <b>'+ex.length+' obra(s) em execu\u00e7\u00e3o</b>, <b>'+rp.length+' em repasse</b>, <b>'+gr.length+' em garantia</b> e <b>'+pv.length+' lan\u00e7amento(s)</b> previstos. A sa\u00fade do portf\u00f3lio \u00e9 <b>mista</b>: o custo direto está sob controle (IPC pr\u00f3ximo de 1), mas a <b>margem consolidada está pressionada</b> \u2014 puxada pelas despesas financeiras da Matera, que mais que dobraram na revis\u00e3o (de R$ 4,79 mi para R$ 10,76 mi) e derrubaram a margem do projeto de ~15% para ~7,5%. O caixa do grupo fecha o acumulado positivo, por\u00e9m com forte drenagem do servi\u00e7o da d\u00edvida.</p></div>';
+ h+='<h2 class="sec">Pontos de aten\u00e7\u00e3o</h2>';
+ h+=alertRow('alta','Matera \u2014 juros corroendo a margem','As despesas financeiras dobraram na \u00faltima revis\u00e3o de viabilidade. A margem caiu de 15,04% para 7,51%. \u00c9 o maior risco de resultado do portf\u00f3lio.');
+ h+=alertRow('media','Blank \u2014 custo levemente acima do or\u00e7ado','IPC em 0,98: o custo realizado roda ~2% acima do or\u00e7ado. Ainda na faixa, mas merece aten\u00e7\u00e3o na pr\u00f3xima medi\u00e7\u00e3o.');
+ h+=alertRow('media','Neo \u2014 resultado preso no estoque','Em repasse com 3 unidades em estoque. O resultado s\u00f3 vira definitivo quando o estoque for vendido e os receb\u00edveis liquidados.');
+ h+=alertRow('baixa','Caixa do grupo \u2014 positivo, mas dependente','O acumulado \u00e9 positivo, por\u00e9m sustentado por aportes e taxa de adm. O servi\u00e7o da d\u00edvida \u00e9 a maior sa\u00edda recorrente.');
+ h+='<h2 class="sec">A\u00e7\u00f5es corretivas sugeridas</h2><div class="grid g2">';
+ h+='<div class="card"><b style="color:var(--navy);font-size:13px">1 \u00b7 Renegociar o financiamento da Matera</b><div style="font-size:12px;color:var(--muted);margin-top:4px">Maior alavanca de margem. Reduzir o custo financeiro recupera parte dos ~7,5 pontos perdidos.</div></div>';
+ h+='<div class="card"><b style="color:var(--navy);font-size:13px">2 \u00b7 Acelerar a venda do estoque do Neo</b><div style="font-size:12px;color:var(--muted);margin-top:4px">Libera o resultado preso e antecipa caixa. Aten\u00e7\u00e3o ao desconto vs. tabela.</div></div>';
+ h+='<div class="card"><b style="color:var(--navy);font-size:13px">3 \u00b7 Revisar a tabela de pre\u00e7os (INCC)</b><div style="font-size:12px;color:var(--muted);margin-top:4px">O VGV atualizado segue o INCC; checar se o estoque acompanha o mercado.</div></div>';
+ h+='<div class="card"><b style="color:var(--navy);font-size:13px">4 \u00b7 Reduzir a exposi\u00e7\u00e3o \u00e0 d\u00edvida</b><div style="font-size:12px;color:var(--muted);margin-top:4px">Servi\u00e7o da d\u00edvida \u00e9 a maior drenagem; escalonar amortiza\u00e7\u00f5es protege o caixa.</div></div>';
+ h+='</div>';
+ h+='<h2 class="sec">Cen\u00e1rios e tend\u00eancias</h2>';
+ h+='<table><thead><tr><th>Cen\u00e1rio</th><th class="r">Margem Matera</th><th class="r">Resultado do grupo</th><th>Leitura</th></tr></thead><tbody>';
+ h+='<tr><td><b>Base</b> (revis\u00e3o atual)</td><td class="r mono">7,5%</td><td class="r mono">R$ 1,21 mi</td><td style="font-size:11.5px;color:var(--muted)">margem pressionada, mas positiva</td></tr>';
+ h+='<tr><td>Estresse \u2014 juros +2 p.p.</td><td class="r mono neg">4,1%</td><td class="r mono neg">R$ 0,3 mi</td><td style="font-size:11.5px;color:var(--muted)">resultado quase consumido pelos juros</td></tr>';
+ h+='<tr><td>Vendas aceleradas \u2014 estoque \u221230%</td><td class="r mono pos">9,8%</td><td class="r mono pos">R$ 2,4 mi</td><td style="font-size:11.5px;color:var(--muted)">antecipa caixa e recupera margem</td></tr>';
+ h+='</tbody></table><p class="note">Proje\u00e7\u00f5es ilustrativas \u2014 no sistema real, os cen\u00e1rios recalculam a partir do realizado do Sienge e das premissas (juros, INCC, ritmo de vendas).</p>';
+ h+=qaBlock();
+ h+=contractBar(['Estado consolidado dos m\u00f3dulos'],[]);document.getElementById('ia-c').innerHTML=h;
+}
+
+function contractBar(imports,exports){
+ var h='<div style="margin-top:18px;border-top:1px dashed var(--line);padding-top:12px">';
+ h+='<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:9px">Contratos entre m\u00f3dulos \u00b7 o que um exporta, o outro importa</div>';
+ if(imports&&imports.length){
+  h+='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><span style="font-size:11px;font-weight:700;color:var(--teal);min-width:90px">\u2193 Importa de</span>';
+  imports.forEach(function(s){h+='<span style="font-size:10.5px;font-weight:600;color:#1d6b4f;background:#e6f1ec;border-radius:20px;padding:3px 10px">'+s+'</span>';});
+  h+='</div>';
+ }
+ if(exports&&exports.length){
+  h+='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;color:var(--amber);min-width:90px">\u2191 Exporta para</span>';
+  exports.forEach(function(t){h+='<button class="fbtn" style="background:var(--navy);color:#fff;border-color:var(--navy)" onclick="exportTo(\''+t.replace(/'/g,"")+'\')">Exportar JSON \u2192 '+t+'</button>';});
+  h+='</div>';
+ }
+ if((!imports||!imports.length)&&(!exports||!exports.length)){
+  h+='<div style="font-size:11.5px;color:var(--muted)">Camada de leitura \u2014 consome o estado de todos os m\u00f3dulos e n\u00e3o exporta adiante.</div>';
+ }
+ return h+'</div>';
+}
+function exportTo(t){alert('Simulação: pacote JSON exportado para ' + t + '.\n\nO módulo de destino importa exatamente este contrato, usando a mesma chave de casamento: obra/SPE × verba/centro × período. O que um exporta, o outro importa.');}
+
+function setHorizon(v){S.horizon=v;renderPlano();renderFinance();}
+function horizonStrip(){
+ var ho=S.horizon||'longo';
+ function card(key,active,eyebrow,color,title,desc){
+  return '<div onclick="setHorizon(\''+key+'\')" style="cursor:pointer;flex:1;min-width:215px;border:1px solid '+(active?color:'var(--line)')+';border-left:4px solid '+color+';border-radius:10px;padding:10px 13px;background:'+(active?'#fff':'#f3f5f4')+';box-shadow:'+(active?'0 2px 10px rgba(0,0,0,.07)':'none')+';transition:.15s">'
+   +'<div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><div style="font-size:10px;font-weight:700;color:'+color+';letter-spacing:.5px">'+eyebrow+'</div>'
+   +(active?'<span style="font-size:9px;font-weight:700;color:#fff;background:'+color+';border-radius:20px;padding:2px 9px">ABERTO</span>':'<span style="font-size:9px;color:var(--muted)">clique p/ abrir</span>')+'</div>'
+   +'<div style="font-size:13px;color:var(--navy);font-weight:600;margin-top:3px">'+title+'</div>'
+   +'<div style="font-size:11px;color:var(--muted)">'+desc+'</div></div>';
+ }
+ return '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px">'
+  +card('curto',ho==='curto','CURTO PRAZO','var(--teal)','Próximos 24 meses \u00b7 2026\u20132027','visão focada: obras correntes e lançamentos próximos')
+  +card('longo',ho==='longo','LONGO PRAZO \u00b7 HORIZONTE ROLANTE','var(--blue)','Visão total \u00b7 até 2033 (rolante)','tudo: avança 1 ano a cada virada')
+  +'</div>';
+}
+
+// LINHA DE BASE — só previsões de obras novas, sem cenário. NUNCA muda.
+var BASELINE={vgv:145.0,margem:14.0,resultado:20.3,caixa:12.0,expo:18.0,tir:19.0,obras:'Aurora (48) \u00b7 Horizonte (62) \u00b7 Verta (35)'};
+if(!S.sim)S.sim={preco:0,vendas:0,custo:0,juros:0,atraso:0};
+if(S.cenario===undefined)S.cenario=null;
+if(!S.ffView)S.ffView='base';
+
+function num1(n){return n.toFixed(1).replace('.',',');}
+function calcCenario(){
+ var p=S.sim.preco,v=S.sim.vendas,c=S.sim.custo,j=S.sim.juros,a=S.sim.atraso;
+ var resultado=BASELINE.resultado + p*0.9 + v*0.01 - c*0.7 - j*0.9 - a*0.2;
+ var caixa=BASELINE.caixa + p*0.6 + v*0.06 - c*0.4 - j*0.6 - a*0.5;
+ var expo=BASELINE.expo - p*0.2 - v*0.12 + c*0.25 + j*0.3 + a*0.4;
+ var tir=BASELINE.tir + p*0.6 + v*0.08 - c*0.5 - j*0.7 - a*0.3;
+ return {resultado:resultado,caixa:caixa,expo:expo,tir:tir,margem:resultado/BASELINE.vgv*100};
+}
+function simInput(field,el){S.sim[field]=parseFloat(el.value)||0;}
+function simular(){S.cenario=calcCenario();S.ffView='cenario';renderPlano();renderFinance();}
+function resetSim(){S.sim={preco:0,vendas:0,custo:0,juros:0,atraso:0};S.cenario=null;S.ffView='base';renderPlano();renderFinance();}
+function setFFView(v){S.ffView=v;renderFinance();}
+
+function simField(f,label,val){return '<div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">'+label+'</label><input type="number" value="'+val+'" oninput="simInput(\''+f+'\',this)" style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-family:var(--mono);font-size:13px;color:var(--navy);outline:none"></div>';}
+function simRow(label,base,cen,suf,inverse){var d=cen-base;var good=inverse?(d<=0):(d>=0);var col=good?'pos':'neg';return '<tr><td>'+label+'</td><td class="r mono">'+num1(base)+suf+'</td><td class="r mono"><b>'+num1(cen)+suf+'</b></td><td class="r mono '+col+'">'+(d>=0?'+':'')+num1(d)+suf+'</td></tr>';}
+function baseMetric(lab,val){return '<div><div style="font-size:10px;color:var(--muted)">'+lab+'</div><div style="font-family:var(--mono);font-weight:700;color:var(--navy)">'+val+'</div></div>';}
+
+function simuladorBlock(){
+ var c=S.cenario;
+ var h='<h2 class="sec">Simulador de cen\u00e1rios</h2><div class="card" style="border-left:4px solid var(--blue)">';
+ h+='<p style="font-size:12.5px;color:var(--muted);line-height:1.55;margin:0 0 12px">Projeta cen\u00e1rios sobre as <b>previs\u00f5es de obras novas</b> e leva o resultado pro fluxo de caixa (FinanceFlow). <b>N\u00e3o toca nas obras em andamento</b> (BuildIQ) e <b>nunca apaga a linha de base</b>.</p>';
+ h+='<div style="border:1px dashed var(--line);border-radius:10px;padding:11px 13px;background:#f7f9f8;margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:var(--navy);letter-spacing:.5px">\ud83d\udd12 LINHA DE BASE \u00b7 refer\u00eancia fixa</div><div style="font-size:11px;color:var(--muted);margin:3px 0 8px">s\u00f3 previs\u00f5es de obras novas, sem cen\u00e1rio \u00b7 '+BASELINE.obras+'</div><div style="display:flex;gap:22px;flex-wrap:wrap">'
+  +baseMetric('Resultado',num1(BASELINE.resultado)+' mi')+baseMetric('Margem',num1(BASELINE.margem)+'%')+baseMetric('Caixa projetado',num1(BASELINE.caixa)+' mi')+baseMetric('Exposi\u00e7\u00e3o m\u00e1x. caixa',num1(BASELINE.expo)+' mi')+baseMetric('TIR',num1(BASELINE.tir)+'%')+'</div></div>';
+ h+='<div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:7px">Premissas do cen\u00e1rio</div>';
+ h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px">';
+ h+=simField('preco','Pre\u00e7o de venda (\u0394%)',S.sim.preco)+simField('vendas','Velocidade de vendas (VSO % /trim)',S.sim.vendas)+simField('custo','Custo \u00b7 INCC (\u0394%)',S.sim.custo)+simField('juros','Juros / funding (\u0394 p.p.)',S.sim.juros)+simField('atraso','Atraso de obra (meses)',S.sim.atraso);
+ h+='</div>';
+ h+='<div style="display:flex;gap:8px;align-items:center"><button class="promo" onclick="simular()">Simular cen\u00e1rio \u2192</button><button class="fbtn" onclick="resetSim()">\u21a9 limpar</button></div>';
+ if(c){
+  h+='<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px"><div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:8px">Cen\u00e1rio simulado vs linha de base</div>';
+  h+='<table><thead><tr><th>Indicador</th><th class="r">Linha de base</th><th class="r">Cen\u00e1rio</th><th class="r">\u0394</th></tr></thead><tbody>';
+  h+=simRow('Resultado projetado',BASELINE.resultado,c.resultado,' mi',false)+simRow('Margem',BASELINE.margem,c.margem,'%',false)+simRow('Caixa projetado',BASELINE.caixa,c.caixa,' mi',false)+simRow('Exposi\u00e7\u00e3o m\u00e1xima de caixa',BASELINE.expo,c.expo,' mi',true)+simRow('TIR',BASELINE.tir,c.tir,'%',false);
+  h+='</tbody></table><p class="note">Cen\u00e1rio levado ao <b>FinanceFlow</b> como vers\u00e3o de fluxo de caixa. A linha de base permanece intacta. (Exposi\u00e7\u00e3o m\u00e1xima de caixa: quanto menor, melhor.)</p></div>';
+ }
+ h+='</div>';
+ return h;
+}
+
+function ffScenarioBar(){
+ var c=S.cenario,view=S.ffView||'base';
+ var h='<div style="display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap"><span style="font-size:11px;font-weight:600;color:var(--muted);margin-right:4px">Vers\u00e3o do fluxo:</span>';
+ h+='<button class="fbtn'+(view==='base'?' on':'')+'" onclick="setFFView(\'base\')">\ud83d\udd12 Linha de base</button>';
+ h+='<button class="fbtn'+(view==='cenario'?' on':'')+'" onclick="setFFView(\'cenario\')">Cen\u00e1rio simulado</button></div>';
+ if(view==='cenario'){
+  if(c){var d=c.caixa-BASELINE.caixa;
+   h+='<div class="alert" style="margin-bottom:14px;background:#FBEFD9;border-left-color:var(--amber);color:#9a5b12">Cen\u00e1rio aplicado: caixa projetado <b>'+num1(c.caixa)+' mi</b> ('+(d>=0?'+':'')+num1(d)+' mi vs base) \u00b7 exposi\u00e7\u00e3o m\u00e1xima <b>'+num1(c.expo)+' mi</b> \u00b7 TIR <b>'+num1(c.tir)+'%</b>. A linha de base permanece preservada.</div>';
+  }else{
+   h+='<div class="alert" style="margin-bottom:14px">Nenhum cen\u00e1rio simulado ainda. V\u00e1 ao <b>Planejamento \u2192 Simulador de cen\u00e1rios</b> e clique em Simular.</div>';
+  }
+ }else{
+  h+='<div class="alert" style="margin-bottom:14px;background:#f7f9f8;border-left-color:var(--navy);color:var(--navy)">\ud83d\udd12 <b>Linha de base</b> \u2014 o fluxo s\u00f3 com as previs\u00f5es de obras novas, sem cen\u00e1rio. Esta vers\u00e3o nunca se perde.</div>';
+ }
+ return h;
+}
+
+function ffHorizonStrip(){
+ var ho=S.horizon||'longo';
+ function card(key,active,eyebrow,color,title,desc){
+  return '<div onclick="setHorizon(\''+key+'\')" style="cursor:pointer;flex:1;min-width:215px;border:1px solid '+(active?color:'var(--line)')+';border-left:4px solid '+color+';border-radius:10px;padding:10px 13px;background:'+(active?'#fff':'#f3f5f4')+';box-shadow:'+(active?'0 2px 10px rgba(0,0,0,.07)':'none')+';transition:.15s">'
+   +'<div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><div style="font-size:10px;font-weight:700;color:'+color+';letter-spacing:.5px">'+eyebrow+'</div>'
+   +(active?'<span style="font-size:9px;font-weight:700;color:#fff;background:'+color+';border-radius:20px;padding:2px 9px">ABERTO</span>':'<span style="font-size:9px;color:var(--muted)">clique p/ abrir</span>')+'</div>'
+   +'<div style="font-size:13px;color:var(--navy);font-weight:600;margin-top:3px">'+title+'</div><div style="font-size:11px;color:var(--muted)">'+desc+'</div></div>';
+ }
+ return '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px">'
+  +card('curto',ho==='curto','CURTO PRAZO \u00b7 LIQUIDEZ','var(--teal)','Pr\u00f3ximos 12\u201324 meses','caixa operacional: pagar contas, capital de giro')
+  +card('longo',ho==='longo','LONGO PRAZO \u00b7 ESTRUTURAL (rolante)','var(--blue)','At\u00e9 2033 \u00b7 funding e d\u00edvida','necessidade de capital ao longo do ciclo')
+  +'</div>';
+}
+
+function renderAll(){renderConsol();renderBiq();renderFinance();renderPlano();renderDrp();renderDre();renderIA();}
+
+function quadrante(ex){
+  var dots='';
+  ex.forEach(function(o){var d=D[o.id];if(d.ipc==null)return;
+    var x=50+(d.ipc-1)*350,y=50-(d.ipp-1)*350;
+    x=Math.max(8,Math.min(92,x));y=Math.max(8,Math.min(92,y));
+    dots+='<div style="position:absolute;left:'+x+'%;top:'+y+'%;transform:translate(-50%,-50%);text-align:center"><div style="width:13px;height:13px;border-radius:50%;background:var(--amber);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);margin:0 auto"></div><div style="font-size:9px;font-weight:700;color:var(--navy);margin-top:2px;white-space:nowrap">'+fname(o.id)+'</div></div>';});
+  var b='<div style="position:relative;width:100%;max-width:330px;aspect-ratio:1;border:1px solid var(--line);border-radius:12px;background:#fff;margin:0 auto">';
+  b+='<div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)"></div><div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--line)"></div>';
+  b+='<div style="position:absolute;top:5px;right:7px;font-size:8.5px;color:var(--green);font-weight:700">custo ok + no prazo</div>';
+  b+='<div style="position:absolute;bottom:5px;right:7px;font-size:8.5px;color:#9a5b12;font-weight:700">custo ok + atrasada</div>';
+  b+='<div style="position:absolute;top:5px;left:7px;font-size:8.5px;color:#9a5b12;font-weight:700">estourando + no prazo</div>';
+  b+='<div style="position:absolute;bottom:5px;left:7px;font-size:8.5px;color:var(--red);font-weight:700">estourando + atrasada</div>';
+  b+=dots+'</div><p class="note" style="text-align:center">Eixo \u2192 IPC (custo) \u00b7 Eixo \u2191 IPP (prazo) \u00b7 centro = 1,00</p>';
+  return b;
+}
+function saldos(){
+  var rows=[['SPE Matera','1.480','receb\u00edveis > desembolso',false],['SPE Blank','(620)','desembolso > receb\u00edveis',true],['SPE Neo','1.250','em repasse',false],['Construtora (ADM+Justfix)','19','consolidado',false],['Empr\u00e9stimos','(3.900)','servi\u00e7o da d\u00edvida',true]];
+  var h='<h2 class="sec" style="margin-top:0">Saldo por caixa (R$ mil)</h2><table><thead><tr><th>Entidade</th><th class="r">Saldo</th></tr></thead><tbody>';
+  rows.forEach(function(r){h+='<tr><td>'+r[0]+'<div style="font-size:10px;color:var(--muted)">'+r[2]+'</div></td><td class="r mono '+(r[3]?'neg':'')+'">'+r[1]+'</td></tr>';});
+  h+='</tbody><tfoot><tr><td>Total do grupo (l\u00edquido intercompany) \u00b7 ilustrativo</td><td class="r mono neg">(1.771)</td></tr></tfoot></table>';
+  return h;
+}
+function renderConsol(){
+  var ex=withSt(['execucao']),rp=withSt(['repasse']),gr=withSt(['garantia']),pv=withSt(['prevista']);
+  var h='<div class="grid g4" style="margin-bottom:16px">';
+  h+=kpi('Em execu\u00e7\u00e3o',ex.length+'','BuildIQ','teal');
+  h+=kpi('Em repasse',rp.length+'','DRP','navy');
+  h+=kpi('Em garantia',gr.length+'','construtora','amber');
+  h+=kpi('Previstas',pv.length+'','Planejamento','blue');
+  h+='</div>';
+  h+='<h2 class="sec">Sa\u00fade do portf\u00f3lio \u2014 IPC (custo) \u00d7 IPP (prazo)</h2>';
+  h+='<div class="grid g2" style="align-items:start"><div>'+quadrante(ex)+'</div><div>'+saldos()+'</div></div>';
+  h+='<h2 class="sec">Leitura por m\u00f3dulo</h2><div class="lenses">';
+  h+=lens('biq','BuildIQ','obras',ex.length+' em execu\u00e7\u00e3o','custo \u00d7 prazo por obra');
+  h+=lens('ff','FinanceFlow','caixa','multi-entidade','realizado + projetado');
+  h+=lens('pl','Planejamento','2027\u201332',pv.length+' lan\u00e7amentos','+ matriz + empr\u00e9stimos');
+  h+=lens('drp','Resultado','DRP/DRE',rp.length+' em repasse','POC + reconcilia\u00e7\u00e3o');
+  h+='</div><div class="sienge"><span class="dot"></span><b>Camada 0 \u2014 Sienge:</b> fonte do realizado. Cada m\u00f3dulo l\u00ea e devolve, verba a verba.</div>';
+  h+=contractBar(['BuildIQ','FinanceFlow','Planejamento','Resultado DRP','Resultado DRE'],[]);document.getElementById('ov-c').innerHTML=h;
+}
+function lens(cls,name,tag,reading,rl){return '<div class="lens '+cls+'"><div class="mname">'+name+' <span>'+tag+'</span></div><div class="reading">'+reading+'</div><div class="rl">'+rl+'</div></div>';}
+
+function viaTable(d){var b='';d.via.forEach(function(r){var t=r[3];var cls=(t==='sub'||t==='tot')?'sub-tot':'';var lab=(t==='main'||t==='sub'||t==='tot')?'<b>'+r[0]+'</b>':r[0];var av=(t==='warn')?'<span class="neg">'+r[2]+'</span>':r[2];b+='<tr class="'+cls+'"><td>'+lab+'</td><td class="r mono">'+r[1]+'</td><td class="r mono">'+av+'</td></tr>';});
+  return '<table><thead><tr><th>Linha</th><th class="r">Original</th><th class="r">Atual</th></tr></thead><tbody>'+b+'</tbody></table>';}
+function biqReport(id){var d=D[id];var h='';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px"><span class="pill" style="margin:0">'+d.nome+' \u00b7 '+d.tipo+'</span><button class="promo" onclick="promote(\''+id+'\')">Promover \u2192 Em repasse \u2197</button></div>';
+  if(d.via){
+    h+='<div class="metrics"><div class="m"><div class="l">IPC \u00b7 custo</div><div class="v tl">'+d.ipc.toFixed(4).replace('.',',')+'</div></div><div class="m"><div class="l">IPP \u00b7 prazo</div><div class="v">'+d.ipp.toFixed(4).replace('.',',')+'</div></div><div class="m"><div class="l">Execu\u00e7\u00e3o medida</div><div class="v">'+d.exec+'</div></div></div>';
+    h+='<h2 class="sec">Viabilidade (DRP) \u2014 R$ mi</h2>'+viaTable(d);
+    h+='<h2 class="sec">Comercial</h2><div class="grid g4">'+kpi('Vendido',d.vendido,d.unid+' un.','teal')+kpi('Estoque',d.estoque,'','navy')+kpi('Inadimpl\u00eancia',d.inad,'caixa \u00b7 n\u00e3o reduz VGV','red')+kpi('Margem',d.margem,'','blue')+'</div>';
+  } else {
+    h+='<div class="card" style="margin-top:10px">Obra rec\u00e9m-promovida para execu\u00e7\u00e3o. Os relat\u00f3rios (viabilidade, custos, comercial, carteira) <b>entram com a leitura do Sienge</b>. Aqui ela j\u00e1 passa a ser gerida como obra em andamento.</div>';
+  }
+  return h;
+}
+function renderBiq(){
+  document.getElementById('biq-filter').innerHTML=filterBar('bf',S.bf,['execucao','repasse','garantia']);
+  var list=withSt(['execucao','repasse','garantia']);
+  var shown=list.filter(function(o){return S.bf==='tudo'||o.status===S.bf;});
+  var execShown=shown.filter(function(o){return o.status==='execucao'});
+  if(!S.biqSel||st(S.biqSel)!=='execucao'||!execShown.find(function(o){return o.id===S.biqSel})){S.biqSel=execShown.length?execShown[0].id:null;}
+  var sel='';
+  shown.forEach(function(o){
+    if(o.status==='execucao'){sel+='<button class="obsel biqsel'+(S.biqSel===o.id?' on':'')+'" data-b="'+o.id+'">'+fname(o.id)+'</button>';}
+    else{sel+='<span class="obsel" style="opacity:.5;cursor:default">'+fname(o.id)+' \u00b7 '+STAT[o.status].l+'</span>';}
+  });
+  if(!shown.length)sel='<span style="font-size:12px;color:var(--muted);padding:7px 10px">Nenhuma obra neste filtro.</span>';
+  document.getElementById('biq-sel').innerHTML=sel;
+  var c=document.getElementById('biq-c');
+  if(!S.biqSel){c.innerHTML='<div class="card">Nenhuma obra em execu\u00e7\u00e3o. Promova um lan\u00e7amento no Planejamento para v\u00ea-la aqui.</div>';return;}
+  c.innerHTML=biqReport(S.biqSel)+contractBar(['Sienge'],['Resultado DRP','Planejamento']);
+}
+
+function renderPlano(){
+  document.getElementById('plano-filter').innerHTML=filterBar('pf',S.pf,['prevista','execucao','repasse','garantia']);
+  var emp=S.obras.filter(function(o){var stOk=S.pf==='tudo'||o.status===S.pf;var hoOk=(S.horizon!=='curto')||o.status!=='prevista'||(D[o.id].inicio&&parseInt(D[o.id].inicio)<=2027);return stOk&&hoOk;});
+  var h=horizonStrip()+'<h2 class="sec" style="margin-top:0">Empreendimentos</h2><table><thead><tr><th>Obra</th><th>Status</th><th class="r">VGV / proje\u00e7\u00e3o</th><th class="r">A\u00e7\u00e3o</th></tr></thead><tbody>';
+  emp.forEach(function(o){var d=D[o.id];var vgv=d.vgvPrev?('VGV prev. '+d.vgvPrev):(d.vgvN?('VGV '+mi(d.vgvN)):(d.resDistribuido?'conclu\u00edda':'\u2014'));
+    var act=(o.status==='prevista')?'<button class="promo exec" onclick="promote(\''+o.id+'\')">Promover \u2192 Em execu\u00e7\u00e3o \u2197</button>':'<span style="font-size:10.5px;color:var(--muted)">promovida</span> <button class="fbtn" onclick="revert(\''+o.id+'\')">\u21a9 reverter</button>';
+    h+='<tr><td><b>'+d.nome+'</b><div style="font-size:10px;color:var(--muted)">'+d.tipo+'</div></td><td>'+sbadge(o.status)+'</td><td class="r mono" style="font-size:11.5px">'+vgv+'</td><td class="r">'+act+'</td></tr>';});
+  if(!emp.length)h+='<tr><td colspan="4" style="color:var(--muted)">Nenhuma obra neste filtro.</td></tr>';
+  h+='</tbody></table>';
+  h+='<h2 class="sec">Just matriz e estrutura</h2><table><thead><tr><th>Centro / entidade</th><th>Papel</th><th class="r">Proje\u00e7\u00e3o 2027\u201332</th></tr></thead><tbody>';
+  var garN=withSt(['garantia']).map(function(o){return fname(o.id)}).join(', ');
+  [['Administra\u00e7\u00e3o (ADM)','Overhead da construtora','despesa recorrente'],['Justfix','Granito \u00e0s SPEs','receita + custo'],['Obras de Terceiros','Obras n\u00e3o pr\u00f3prias','receita vari\u00e1vel'],['Obras em garantia \u2014 Just Constru\u00e7\u00f5es',(garN?garN+' \u00b7 manuten\u00e7\u00e3o p\u00f3s-obra (5 anos)':'nenhuma no momento'),'custo de garantia'],['Empr\u00e9stimos / cons\u00f3rcios','Servi\u00e7o da d\u00edvida','amortiza\u00e7\u00e3o + juros']].forEach(function(r){h+='<tr><td><b>'+r[0]+'</b></td><td style="font-size:11.5px">'+r[1]+'</td><td class="r" style="font-size:11px;color:var(--muted)">'+r[2]+'</td></tr>';});
+  h+='</tbody></table>';
+  
+  h+=simuladorBlock();h+=contractBar(['BuildIQ','Sienge'],['FinanceFlow']);document.getElementById('plano-c').innerHTML=h;
+}
+
+function drpView(id){var o=S.obras.find(function(x){return x.id===id});var d=D[id];var h='';
+  if(o.status==='execucao'){
+    if(d.poc==null){return '<div style="margin-bottom:14px">'+sbadge('execucao')+'</div><div class="card">Obra rec\u00e9m-promovida \u2014 viabilidade e POC entram com a leitura do Sienge.</div>';}
+    var recR=d.vgvN*d.poc,recC=d.custoTotal*d.poc,recRes=d.resViab*d.poc;
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+sbadge('execucao')+'<button class="promo" onclick="promote(\''+id+'\')">Promover \u2192 Em repasse \u2197</button></div>';
+    h+='<div class="metrics"><div class="m"><div class="l">POC</div><div class="v tl">'+pct(d.poc)+'</div></div><div class="m"><div class="l">Custo realizado</div><div class="v" style="font-size:14px">'+mi(d.custoReal)+'</div></div><div class="m"><div class="l">Custo total corrigido</div><div class="v" style="font-size:14px">'+mi(d.custoTotal)+'</div></div></div>';
+    h+='<p class="note">POC = '+mi(d.custoReal)+' \u00f7 '+mi(d.custoTotal)+' = <b>'+pct(d.poc)+'</b>. O resultado \u00e9 reconhecido nessa propor\u00e7\u00e3o.</p>';
+    h+='<table><thead><tr><th>Reconhecimento por POC</th><th class="r">Total</th><th class="r">\u00d7 POC</th><th class="r">Reconhecido</th></tr></thead><tbody>';
+    h+='<tr><td>Receita (VGV)</td><td class="r mono">'+mi(d.vgvN)+'</td><td class="r mono">'+pct(d.poc)+'</td><td class="r mono">'+mi(recR)+'</td></tr>';
+    h+='<tr><td>(\u2212) Custo do projeto</td><td class="r mono">'+mi(d.custoTotal)+'</td><td class="r mono">'+pct(d.poc)+'</td><td class="r mono neg">('+mi(recC)+')</td></tr>';
+    h+='</tbody><tfoot><tr><td>= Resultado reconhecido</td><td class="r mono"></td><td class="r mono">'+pct(d.poc)+'</td><td class="r mono">'+mi(recRes)+'</td></tr></tfoot></table>';
+    h+='<div style="margin:14px 0 6px;height:12px;background:#e7ebe9;border-radius:7px;overflow:hidden"><div style="height:100%;width:'+pct(d.poc)+';background:var(--teal)"></div></div>';
+    h+='<p class="note">Cresce com o POC e iguala a viabilidade ('+mi(d.resViab)+', margem '+d.margem+') em 100%.</p>';
+  } else if(o.status==='repasse'){
+    if(!d.ativo){return '<div style="margin-bottom:14px">'+sbadge('repasse')+'</div><div class="card">Obra em repasse \u2014 posi\u00e7\u00e3o financeira entra com a leitura do Sienge.</div>';}
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+sbadge('repasse')+'<button class="promo" onclick="promote(\''+id+'\')">Concluir \u2192 Em garantia \u2197</button></div>';
+    h+='<h2 class="sec" style="margin-top:14px">Viabilidade reconhecida \u2014 100% (congelada na entrada do repasse)</h2>';h+='<table><thead><tr><th>Linha (a 100%)</th><th class="r">Valor</th></tr></thead><tbody><tr><td>Receita (VGV)</td><td class="r mono">'+mi(d.vgvN)+'</td></tr><tr><td>(\u2212) Custo total do projeto</td><td class="r mono neg">('+mi(d.custoTotal)+')</td></tr></tbody><tfoot><tr><td>= Resultado da viabilidade \u00b7 margem '+d.margem+'</td><td class="r mono">'+mi(d.resViab)+'</td></tr></tfoot></table>';h+='<p class="note">Vem da execu\u00e7\u00e3o: ao atingir POC 100%, a DRP iguala a viabilidade. A partir daqui, s\u00f3 eventos reais movem o n\u00famero.</p>';h+='<h2 class="sec">Reconcilia\u00e7\u00e3o por eventos</h2><p class="note" style="margin:0 0 12px">O resultado parte da viabilidade acima e muda por <b>eventos reais</b>: venda do estoque com desconto \u2260 tabela, recebimentos, pagamentos.</p>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px"><div><h2 class="sec" style="margin-top:0">Onde est\u00e1 o dinheiro</h2>'+T(['Ativo','R$ mil'],d.ativo)+'</div><div><h2 class="sec" style="margin-top:0">O que falta pagar</h2>'+T(['Passivo','R$ mil'],d.passivo)+'</div></div>';
+    h+='<h2 class="sec">Residuais sobre estoque a vender</h2>'+T(['Item','R$ mil'],d.residuais);
+    h+='<div class="alert" style="margin-top:14px">Resultado reconhecido: <b>'+mi(d.resRec)+'</b> \u2014 partiu da viabilidade ('+mi(d.resViab)+') e foi ajustado pelos eventos. Definitivo s\u00f3 quando vender, receber e pagar tudo.</div>';
+  }
+  return h;
+}
+function renderDrp(){
+  var list=withSt(['execucao','repasse']);
+  if(!S.drpSel||!list.find(function(o){return o.id===S.drpSel}))S.drpSel=list.length?list[0].id:null;
+  var sel='';
+  list.forEach(function(o){sel+='<button class="obsel drpsel'+(S.drpSel===o.id?' on':'')+'" data-d="'+o.id+'">'+fname(o.id)+' \u00b7 '+STAT[o.status].l+'</button>';});
+  var gar=withSt(['garantia']);
+  if(gar.length)sel+='<span class="obsel" style="opacity:.5;cursor:default">'+gar.map(function(o){return fname(o.id)}).join(', ')+' \u2192 migrou p/ garantia</span>';
+  document.getElementById('drp-sel').innerHTML=sel||'<span style="font-size:12px;color:var(--muted);padding:7px">Nenhuma obra ativa na DRP.</span>';
+  var c=document.getElementById('drp-c');
+  c.innerHTML=(S.drpSel?drpView(S.drpSel):'')+contractBar(['BuildIQ','Sienge'],['Resultado DRE','Visão Consolidada']);
+}
+
+function renderFinance(){
+  var rows=[['Entradas','','',''],['Recebimento de vendas (clientes)','4.820','7.640','12.460'],['Libera\u00e7\u00e3o de financiamento \u2014 medi\u00e7\u00e3o do banco','3.100','2.400','5.500'],['Recebimento taxa de adm (SPEs)','900','1.260','2.160'],['Sa\u00eddass','','',''],['Custo de obra (material + m\u00e3o de obra)','(5.900)','(8.100)','(14.000)'],['Despesas ADM + impostos','(1.100)','(1.540)','(2.640)'],['Servi\u00e7o da d\u00edvida','(1.400)','(2.500)','(3.900)'],['Garantia das obras entregues','(50)','(70)','(120)']];
+  var h=ffHorizonStrip()+ffScenarioBar()+'<div class="alert" style="margin-bottom:14px;background:#e6f1ec;border-left-color:var(--teal);color:#1d6b4f">\u2193 <b>Importado do Planejamento</b> \u2014 distribu\u00eddo m\u00eas a m\u00eas e verba a verba (handshake exporta\u00e7\u00e3o\u2192importa\u00e7\u00e3o).</div><h2 class="sec" style="margin-top:0">Consolidado do grupo \u2014 R$ mil (ilustrativo)</h2><table><thead><tr><th>Verba</th><th class="r">Realizado Jan\u2013Mai</th><th class="r">Projetado Jun\u2013Dez</th><th class="r">Total 2026</th></tr></thead><tbody>';
+  rows.forEach(function(r){if(r[1]===''){h+='<tr class="grp"><td colspan="4">'+r[0]+'</td></tr>';}else{var neg=r[1].indexOf('(')>=0;h+='<tr><td>'+r[0]+'</td><td class="r mono '+(neg?'neg':'')+'">'+r[1]+'</td><td class="r mono '+(neg?'neg':'')+'">'+r[2]+'</td><td class="r mono '+(neg?'neg':'')+'">'+r[3]+'</td></tr>';}});
+  h+='</tbody><tfoot><tr><td>Saldo do per\u00edodo</td><td class="r mono">370</td><td class="r mono">1.490</td><td class="r mono">1.860</td></tr></tfoot></table>';
+  h+='<h2 class="sec">Caixas por entidade</h2><table><thead><tr><th>Entidade</th><th>Est\u00e1gio</th><th class="r">Papel no caixa</th></tr></thead><tbody>';
+  withSt(['execucao','repasse']).forEach(function(o){h+='<tr><td><b>SPE '+fname(o.id)+'</b></td><td>'+sbadge(o.status)+'</td><td class="r" style="font-size:11px;color:var(--muted)">caixa pr\u00f3prio</td></tr>';});
+  withSt(['garantia']).forEach(function(o){h+='<tr><td><b>'+fname(o.id)+'</b></td><td>'+sbadge('garantia')+'</td><td class="r" style="font-size:11px;color:var(--muted)">custo de garantia (construtora)</td></tr>';});
+  h+='<tr class="grp"><td colspan="3">Construtora</td></tr><tr><td><b>ADM \u00b7 Justfix \u00b7 Obras de Terceiros</b></td><td>\u2014</td><td class="r" style="font-size:11px;color:var(--muted)">overhead + receitas pr\u00f3prias</td></tr><tr><td><b>Empr\u00e9stimos</b></td><td>\u2014</td><td class="r neg" style="font-size:11px">drenagem</td></tr></tbody></table>';
+  h+='<p class="note">A <b>medi\u00e7\u00e3o do banco</b> (libera financiamento) entra aqui; \u00e9 diferente da medi\u00e7\u00e3o f\u00edsica da obra (BuildIQ). As <b>obras em garantia</b> trazem o custo p\u00f3s-obra ao caixa da construtora.</p>';
+  h+=contractBar(['Planejamento','Sienge'],['Visão Consolidada']);document.getElementById('ff-c').innerHTML=h;
+}
+
+function renderDre(){
+  var gar=withSt(['garantia']);
+  var garN=gar.map(function(o){return fname(o.id)}).join(', ')||'nenhuma';
+  var h='<span class="pill">DRE da Construtora \u00b7 por centro de custo \u00b7 compet\u00eancia \u00b7 ano (ilustrativo)</span>';
+  h+='<table><thead><tr><th>Centro de custo</th><th class="r">Entradas</th><th class="r">Sa\u00eddas (despesas)</th><th class="r">Resultado</th></tr></thead><tbody>';
+  h+='<tr><td>Administra\u00e7\u00e3o \u2014 taxa de adm das obras</td><td class="r mono pos">1.800</td><td class="r mono neg">(1.900)</td><td class="r mono neg">(100)</td></tr>';
+  h+='<tr><td>Justfix \u2014 granito \u00e0s SPEs</td><td class="r mono pos">1.200</td><td class="r mono neg">(900)</td><td class="r mono pos">300</td></tr>';
+  h+='<tr><td>Obras de Terceiros \u2014 escola p/ prefeitura</td><td class="r mono pos">2.400</td><td class="r mono neg">(1.800)</td><td class="r mono pos">600</td></tr>';
+  h+='<tr><td>Obras em garantia ('+garN+') \u2014 manuten\u00e7\u00e3o p\u00f3s-obra (resp. t\u00e9cnica \u00b7 5 anos)</td><td class="r mono">\u2014</td><td class="r mono neg">(250)</td><td class="r mono neg">(250)</td></tr>';
+  h+='<tr><td>Presta\u00e7\u00e3o de servi\u00e7os / outros</td><td class="r mono pos">600</td><td class="r mono neg">(350)</td><td class="r mono pos">250</td></tr>';
+  h+='<tr><td>Empr\u00e9stimos \u2014 servi\u00e7o da d\u00edvida</td><td class="r mono">\u2014</td><td class="r mono neg">(1.400)</td><td class="r mono neg">(1.400)</td></tr>';
+  h+='<tr><td>Impostos pr\u00f3prios \u2014 Presumido (PIS 0,65% + COFINS 3% + IRPJ s/ base 8%)</td><td class="r mono">\u2014</td><td class="r mono neg">(290)</td><td class="r mono neg">(290)</td></tr>';
+  h+='<tr class="sub-tot"><td>= Resultado operacional pr\u00f3prio</td><td class="r mono">6.000</td><td class="r mono">(6.890)</td><td class="r mono neg">(890)</td></tr>';
+  h+='<tr class="grp"><td colspan="4">Equival\u00eancia patrimonial \u2014 a Just \u00e9 s\u00f3cia das SPEs (CPC 18)</td></tr>';
+  h+='<tr><td>(+) Equival\u00eancia patrimonial nos resultados das SPEs</td><td class="r mono">\u2014</td><td class="r mono">\u2014</td><td class="r mono pos">+2.100</td></tr>';
+  h+='</tbody><tfoot><tr><td>= Resultado da construtora</td><td class="r mono"></td><td class="r mono"></td><td class="r mono">1.210</td></tr></tfoot></table>';
+  h+='<div class="bridge"><b>A ponte entre as duas.</b> A taxa de adm (15%) que \u00e9 despesa no DRP entra aqui como receita. A fatia do resultado de cada SPE entra como equival\u00eancia patrimonial. As obras de terceiros e a garantia s\u00e3o s\u00f3 da construtora.</div>';
+  h+=contractBar(['Resultado DRP'],['Visão Consolidada']);document.getElementById('dre-c').innerHTML=h;
+}
+
+var btns=[].slice.call(document.querySelectorAll('.nav button'));
+var views=[].slice.call(document.querySelectorAll('.view'));
+function show(v){views.forEach(function(s){s.classList.toggle('on',s.id===v)});btns.forEach(function(b){b.classList.toggle('active',b.dataset.v===v)});document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});}
+btns.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.v)})});
+document.addEventListener('click',function(e){
+  var t=e.target;
+  var b=t.closest?t.closest('.biqsel'):null; if(b){S.biqSel=b.getAttribute('data-b');renderBiq();return;}
+  var d=t.closest?t.closest('.drpsel'):null; if(d){S.drpSel=d.getAttribute('data-d');renderDrp();return;}
+});
+renderAll();
+
+</script>
+</body>
+</html>

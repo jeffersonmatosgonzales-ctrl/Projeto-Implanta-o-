@@ -13,12 +13,14 @@ import {
   RotateCw,
   Info
 } from 'lucide-react';
-import { SPE, Obra, AIAgent } from '../types';
+import { SPE, Obra, AIAgent, RegistroPatrimonial } from '../types';
+import CfoCopilot from './CfoCopilot';
 
 interface ExecutiveOverviewProps {
   spes: SPE[];
   obras: Obra[];
   agents: AIAgent[];
+  records: RegistroPatrimonial[];
   onNavigateToView: (view: 'overview' | 'buildiq' | 'financeflow' | 'reconciliation') => void;
   onSelectSPE: (speId: string) => void;
 }
@@ -27,6 +29,7 @@ export default function ExecutiveOverview({
   spes, 
   obras, 
   agents, 
+  records,
   onNavigateToView,
   onSelectSPE 
 }: ExecutiveOverviewProps) {
@@ -371,6 +374,13 @@ export default function ExecutiveOverview({
 
         {/* Right Column - AI Data Pipeline "Esteira de Dados" (1/3 width) */}
         <div className="space-y-6">
+          {/* Real-time Fidu-Copilot Active Chat */}
+          <CfoCopilot 
+            spes={spes}
+            obras={obras}
+            reconciliationRecords={records}
+          />
+
           <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-6">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
