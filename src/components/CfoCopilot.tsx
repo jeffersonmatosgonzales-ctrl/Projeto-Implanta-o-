@@ -92,7 +92,7 @@ export default function CfoCopilot({ spes, obras, reconciliationRecords }: CfoCo
     },
     {
       label: "📈 Faturamento Just",
-      prompt: "Como as promoções de estágio que fiz na aba de Reconciliação impactam o DRE fiduciário corporativo faturado pela Just hoje de 8%?"
+      prompt: "Como as promoções de estágio que fiz na aba de Reconciliação impactam o DRE fiduciário corporativo faturado pela Just hoje de 15%?"
     }
   ];
 

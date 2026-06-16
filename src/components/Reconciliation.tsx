@@ -56,9 +56,9 @@ export default function Reconciliation({
     // 1. Calculate dynamic construction revenues & Taxa de Adm for holding Construtora Just
     const constructionObras = obras.filter(o => o.estagio === 'Em Construção');
     
-    // Taxa de administração: 8% on active construction costs
+    // Taxa de administração de obra: 15% on active construction costs
     const totalCustoConstrucaoAtivo = constructionObras.reduce((sum, o) => sum + o.custoRealizado, 0);
-    const taxaAdmObrasCalculada = totalCustoConstrucaoAtivo * 0.08; // 8% de taxa de coordenação física
+    const taxaAdmObrasCalculada = totalCustoConstrucaoAtivo * 0.15; // 15% de taxa de administração de obra
 
     // Justfix Revenue: supplier of tiles/granites proportional to building works (approx 6%)
     const justfixRevenueCalculada = totalCustoConstrucaoAtivo * 0.06;
@@ -104,7 +104,7 @@ export default function Reconciliation({
         realizado: receitaTaxa, 
         delta: receitaTaxa - 2500, 
         code: '3.01.01.01',
-        explanation: `Faturamento gerencial corporativo repassado às SPEs em construção para cobertura de overhead técnico (8% do custo realizado medido). Total de custo em canteiro Just medido neste ciclo: R$ ${(dynamicMetrics.totalCustoConstrucao).toLocaleString('pt-BR')} do Sienge.` 
+        explanation: `Faturamento gerencial corporativo repassado às SPEs em construção para cobertura de overhead técnico (15% do custo realizado medido). Total de custo em canteiro Just medido neste ciclo: R$ ${(dynamicMetrics.totalCustoConstrucao).toLocaleString('pt-BR')} do Sienge.` 
       },
       { 
         item: 'Justfix — Fornecimento de Rochas e Granitos', 
@@ -212,7 +212,7 @@ export default function Reconciliation({
       'Iniciando verificação cruzada de dados das SPEs contra Sienge...',
       'Mapeando progresso de canteiro físico (POC) físico-financeiro...',
       'Conectando com o faturamento do Justfix de rochas ornamentais...',
-      'Verificando faturamento de taxa de administração (8% sobre custo)...',
+      'Verificando faturamento de taxa de administração (15% sobre custo)...',
       'Calculando lucros reflexos por equivalência patrimonial (CPC 18)...',
       'Cruzando extratos de contas fiduciárias vinculadas...',
       'Auditoria de conformidade consolidada sem divergências graves!'
@@ -326,7 +326,7 @@ export default function Reconciliation({
     <div class="flex justify-between items-start border-b pb-8 border-slate-100">
       <div class="space-y-2">
         <h1 class="text-3xl font-bold font-serif text-[#0F293A]">Demonstrativo de Resultado da Construtora</h1>
-        <p class="text-xs text-slate-500 max-w-lg">Apurado gerencial fiduciário do trimestre consolidando a taxa de coordenação física de 8% nos canteiros, fornecimentos Justfix e equivalência proporcional de SPEs (CPC 18).</p>
+        <p class="text-xs text-slate-500 max-w-lg">Apurado gerencial fiduciário do trimestre consolidando a taxa de administração de obra de 15% nos canteiros, fornecimentos Justfix e equivalência proporcional de SPEs (CPC 18).</p>
       </div>
       <div class="text-right space-y-1 bg-[#FDFBF7] p-4 rounded-xl border border-amber-500/20">
         <span class="text-[9px] font-mono tracking-wider text-[#B38E50] uppercase block">Código de Auditoria</span>
@@ -374,7 +374,7 @@ export default function Reconciliation({
         <span>📌 Notas Fiduciárias e Metodologia de Cálculo</span>
       </h4>
       <p class="text-[11px] text-slate-600 leading-relaxed">
-        <strong>Taxa Administrativa (8%):</strong> Calculada reflexamente com base nos custos incorridos de canteiro reportados pelas SPEs ativas no Sienge.<br/>
+        <strong>Taxa Administrativa (15%):</strong> Calculada reflexamente com base nos custos incorridos de canteiro reportados pelas SPEs ativas no Sienge.<br/>
         <strong>Equivalência Patrimonial (CPC 18):</strong> Reconhecimento gerencial proporcional ao percentual de controle da Construtora Just nas SPEs do grupo (Blank: 100%, Matera: 85%, Neo: 60%, Acácias: 100%).
       </p>
     </div>
@@ -469,7 +469,7 @@ export default function Reconciliation({
                 Análise de Resultado com Foco em Coordenação do Caixa
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-                Alinhada ao prumo legal, as receitas operacionais da Holding Construtora Just nascem estritamente da <strong>taxa de coordenação física (8%)</strong> medida no canteiro, faturamento centralizado Justfix e <strong>equivalência patrimonial CPC 18</strong>.
+                Alinhada ao prumo legal, as receitas operacionais da Holding Construtora Just nascem estritamente da <strong>taxa de administração de obra (15%)</strong> medida no canteiro, faturamento centralizado Justfix e <strong>equivalência patrimonial CPC 18</strong>.
               </p>
             </div>
 

@@ -54,7 +54,7 @@ DIRETRIZES DE RESPOSTA:
 2. Seja objetivo, focado e prático. Evite termos genéricos ou "introduções de robô". Vá direto ao prumo analítico.
 3. Use marcações em negrito para destacar valores e métricas críticas.
 4. Se o usuário perguntar sobre desvios ou custos por m², use os dados de BuildIQ (e.g. Matera com custo orçado vs real por m²).
-5. Se perguntar sobre faturamento fiduciário da Just (Holding), lembre que ela fatura 8% de taxa de coordenação fiduciária sobre os custos incorridos em canteiro (obras em andamento) mais fornecimento Centralizado Justfix (Rochas/Mármores).
+5. Se perguntar sobre faturamento fiduciário da Just (Holding), lembre que ela fatura 15% de taxa de administração de obra sobre os custos incorridos em canteiro (obras em andamento) mais fornecimento Centralizado Justfix (Rochas/Mármores).
 6. Explique o impacto de forma estratégica para mitigar riscos de subcapitalização e coordenar fiduciariamente os dividendos reflexos (CPC 18).`;
 
     const chatInput = query || "Por favor, faça uma auditoria geral rápida do caixa das SPEs, indicando onde estão os maiores riscos e o que o CFO Jefferson Gonzales deve priorizar hoje.";
