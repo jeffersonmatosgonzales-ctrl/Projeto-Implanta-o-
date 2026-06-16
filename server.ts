@@ -40,7 +40,7 @@ Seu tom deve ser altamente profissional, preciso em termos contábeis e financei
 
 Aqui está o contexto de dados atualizados em tempo real do ERP Sienge e das Contas Bancárias fiduciárias que o usuário possui:
 
-### 1. SOCIEDADES DE PROPÓSITO ESPECÍFICO (SPEs) ATIVAS
+### 1. SOCIEDADES DE PROPÓSITO ESPECÍFICO (SPEs) ATIVAS (Participação Societária Real do Grupo JUST: Blank 100%, Matera 85%, Neo 60%, Acácias 100%)
 ${JSON.stringify(spes, null, 2)}
 
 ### 2. DETALHAMENTO DE OBRAS (BuildIQ)
@@ -53,9 +53,10 @@ DIRETRIZES DE RESPOSTA:
 1. Responda em português brasileiro.
 2. Seja objetivo, focado e prático. Evite termos genéricos ou "introduções de robô". Vá direto ao prumo analítico.
 3. Use marcações em negrito para destacar valores e métricas críticas.
-4. Se o usuário perguntar sobre desvios ou custos por m², use os dados de BuildIQ (e.g. Matera com custo orçado vs real por m²).
-5. Se perguntar sobre faturamento fiduciário da Just (Holding), lembre que ela fatura 15% de taxa de administração de obra sobre os custos incorridos em canteiro (obras em andamento) mais fornecimento Centralizado Justfix (Rochas/Mármores).
-6. Explique o impacto de forma estratégica para mitigar riscos de subcapitalização e coordenar fiduciariamente os dividendos reflexos (CPC 18).`;
+4. Lembre que os valores de Blank (100%), Matera (85%), Neo (60%) e Acácias (100%) referem-se à PORCENTAGEM DE PARTICIPAÇÃO SOCIETÁRIA da JUST em cada SPE para consolidação por equivalência patrimonial (CPC 18), e nunca a "taxas" tributárias ou de serviço.
+5. Se o usuário perguntar sobre desvios ou custos por m², use os dados de BuildIQ (e.g. Matera com custo orçado vs real por m²).
+6. Esclareça quaisquer dúvidas contábeis com base na realidade fiduciária das SPEs ativas do Grupo JUST S.A.
+7. Explique o impacto de forma estratégica para mitigar riscos de subcapitalização e coordenar fiduciariamente os dividendos reflexos (CPC 18).`;
 
     const chatInput = query || "Por favor, faça uma auditoria geral rápida do caixa das SPEs, indicando onde estão os maiores riscos e o que o CFO Jefferson Gonzales deve priorizar hoje.";
 

@@ -91,8 +91,8 @@ export default function CfoCopilot({ spes, obras, reconciliationRecords }: CfoCo
       prompt: "Analise a saúde do caixa das SPEs. Qual o maior alerta de alavancagem de apoio bancário hoje?"
     },
     {
-      label: "📈 Faturamento Just",
-      prompt: "Como as promoções de estágio que fiz na aba de Reconciliação impactam o DRE fiduciário corporativo faturado pela Just hoje de 15%?"
+      label: "📈 Equivalência Patrimonial",
+      prompt: "Como a participação societária da JUST (Blank 100%, Matera 85%, Neo 60%, Acácias 100%) impacta o balanço consolidado e os dividendos por equivalência patrimonial (CPC 18)?"
     }
   ];
 
