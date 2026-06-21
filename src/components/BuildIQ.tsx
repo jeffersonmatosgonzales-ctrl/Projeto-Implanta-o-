@@ -23,7 +23,8 @@ import {
   AlertCircle,
   Coins,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Sparkles
 } from 'lucide-react';
 import { Obra } from '../types';
 import { buildiqData, BuildIQSubReport, BuildIQReportColumn, viabilidadeProjetos, ViabilidadeDado } from '../data/buildiqData';
@@ -41,7 +42,7 @@ export default function BuildIQ({ obras, onBackToOverview }: BuildIQProps) {
   const [activeReportKey, setActiveReportKey] = useState<string>('vendas');
 
   // Toggle between reports cockpit and feasibility analysis
-  const [activeTab, setActiveTab] = useState<'reports' | 'feasibility'>('feasibility');
+  const [activeTab, setActiveTab] = useState<'reports' | 'feasibility' | 'evm'>('feasibility');
 
   const formatReais = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -135,6 +136,278 @@ export default function BuildIQ({ obras, onBackToOverview }: BuildIQProps) {
     };
   }, [activeViabilidade]);
 
+  const renderEvmPage = () => {
+    // Definimos dados do EVM com base no projeto ativo
+    const isMatera = activeProjectKey === 'matera';
+    const bac = isMatera ? 13558491 : 7749441;
+    const ac = isMatera ? 5660853 : 5306344;
+    const pocFisico = alignedObra.progressoFisico; // Utiliza o progresso físico real do alinhamento do Sienge (78% ou 45%)
+    const pocPlanejado = isMatera ? 70 : 52; // % Programada original no cronograma de linha de base
+
+    const ev = bac * (pocFisico / 100);
+    const pv = bac * (pocPlanejado / 100);
+    const cv = ev - ac;
+    const sv = ev - pv;
+    const cpi = ev / ac;
+    const spi = ev / pv;
+    const eac = bac / cpi;
+    const vac = bac - eac;
+
+    // Diagnósticos baseados nas métricas estruturais
+    const cpiStatus = cpi >= 1.0 ? 'green' : cpi >= 0.85 ? 'yellow' : 'red';
+    const spiStatus = spi >= 1.0 ? 'green' : spi >= 0.85 ? 'yellow' : 'red';
+
+    return (
+      <motion.div
+        key="evm-section"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -15 }}
+        transition={{ duration: 0.2 }}
+        className="space-y-6"
+      >
+        {/* EVM Header info */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-150">
+            <div className="space-y-1">
+              <span className="bg-orange-50 border border-orange-100 text-orange-800 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md tracking-wider">
+                MOTOR PREDITIVO DE ENGENHARIA (ISO 21508)
+              </span>
+              <h3 className="text-base font-bold text-slate-900 font-sans">Análise do Valor Agregado — Earned Value Management (EVM)</h3>
+              <p className="text-xs text-slate-500">
+                Padrão internacional PMI/ANSI para controle preditivo de custos totalizadores e aderência cronológica no canteiro.
+              </p>
+            </div>
+            <div className="bg-slate-50 border border-slate-150 px-4 py-2.5 rounded-xl text-right shrink-0">
+              <span className="text-[10px] font-mono text-slate-400 block">PROJETO OPERACIONAL</span>
+              <strong className="text-xs text-slate-850">{activeProject.nome}</strong>
+            </div>
+          </div>
+
+          {/* EVM KPI Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-mono uppercase text-slate-400 block font-semibold">Planned Value (PV) / Valor Planejado</span>
+              <div className="text-lg font-bold text-slate-800 font-mono mt-1">{formatReais(pv)}</div>
+              <p className="text-[10px] text-slate-450 leading-normal mt-1">Custo acumulado orçado para o cronograma previsto de <strong>{pocPlanejado}%</strong>.</p>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-mono uppercase text-slate-400 block font-semibold">Earned Value (EV) / Valor Agregado</span>
+              <div className="text-lg font-bold text-orange-600 font-mono mt-1">{formatReais(ev)}</div>
+              <p className="text-[10px] text-slate-450 leading-normal mt-1">Valor do trabalho de fato medido e entregue no canteiro de <strong>{pocFisico}%</strong>.</p>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-mono uppercase text-slate-400 block font-semibold">Actual Cost (AC) / Custo Real</span>
+              <div className="text-lg font-bold text-slate-850 font-mono mt-1">{formatReais(ac)}</div>
+              <p className="text-[10px] text-slate-450 leading-normal mt-1">Custos reais faturados e lançados na apropriação gerencial do Sienge.</p>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-mono uppercase text-slate-400 block font-semibold">Budget At Completion (BAC)</span>
+              <div className="text-lg font-bold text-slate-900 font-mono mt-1">{formatReais(bac)}</div>
+              <p className="text-[10px] text-slate-450 leading-normal mt-1">Orçamento inicial contratual total do projeto de engenharia.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Index of Efficiency Gauges */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* CPI Performance Gauge */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">CPI (Cost Performance Index)</h4>
+                <p className="text-[11px] text-slate-400">Medida de eficiência no uso do dinheiro do canteiro.</p>
+              </div>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                cpiStatus === 'green' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                cpiStatus === 'yellow' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {cpiStatus === 'green' ? 'EFICIENTE' : cpiStatus === 'yellow' ? 'ALERTA' : 'CRÍTICO'}
+              </span>
+            </div>
+
+            <div className="text-center py-3">
+              <div className={`text-4xl font-extrabold font-mono ${
+                cpiStatus === 'green' ? 'text-emerald-600' : cpiStatus === 'yellow' ? 'text-amber-500' : 'text-red-650'
+              }`}>
+                {cpi.toFixed(2)}
+              </div>
+              <p className="text-xs text-slate-500 mt-2 font-medium">
+                {cpi >= 1.0 
+                  ? `Para cada R$ 1,00 gasto no canteiro, a JUST agregou R$ ${cpi.toFixed(2)} de valor medido!`
+                  : `Para cada R$ 1,00 gasto, a JUST obteve apenas R$ ${cpi.toFixed(2)} de valor em contrapartida física.`
+                }
+              </p>
+            </div>
+
+            {/* Custom line representing gauge */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-mono text-slate-450">
+                <span>0.5 (Ineficiente)</span>
+                <span>1.0 (Meta)</span>
+                <span>1.5 (Excepcional)</span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden relative">
+                {/* 1.0 target tick */}
+                <div className="absolute left-[50%] top-0 bottom-0 w-0.5 bg-slate-400 z-10" />
+                <div 
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    cpiStatus === 'green' ? 'bg-emerald-500' : cpiStatus === 'yellow' ? 'bg-amber-500' : 'bg-red-500'
+                  }`} 
+                  style={{ width: `${Math.max(10, Math.min(100, ((cpi - 0.5) / 1.0) * 100))}%` }} 
+                />
+              </div>
+            </div>
+            
+            <div className="text-[11px] text-slate-500 border-t border-slate-100 pt-3">
+              <strong className="text-slate-700">Cálculo Fiduciário:</strong> <code>EV / AC</code>. Reflete se o orçamento contratado por m² está se sustentando na realidade atual sem estourar.
+            </div>
+          </div>
+
+          {/* SPI Performance Gauge */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">SPI (Schedule Performance Index)</h4>
+                <p className="text-[11px] text-slate-400">Medida de aderência ao cronograma físico.</p>
+              </div>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                spiStatus === 'green' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                spiStatus === 'yellow' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {spiStatus === 'green' ? 'NO PRAZO / ADIANTADO' : spiStatus === 'yellow' ? 'ALERTA ATRASO' : 'ATRASO CRÍTICO'}
+              </span>
+            </div>
+
+            <div className="text-center py-3">
+              <div className={`text-4xl font-extrabold font-mono ${
+                spiStatus === 'green' ? 'text-emerald-600' : spiStatus === 'yellow' ? 'text-amber-500' : 'text-red-650'
+              }`}>
+                {spi.toFixed(2)}
+              </div>
+              <p className="text-xs text-slate-500 mt-2 font-medium">
+                {spi >= 1.0 
+                  ? `A obra está ${((spi - 1.0) * 100).toFixed(0)}% adiantada de prazo frente ao programado.`
+                  : `A obra está entregando apenas ${((spi) * 100).toFixed(0)}% do cronograma programado no prumo de tempo.`
+                }
+              </p>
+            </div>
+
+            {/* Custom line representing gauge */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-mono text-slate-450">
+                <span>0.5 (Atrasado)</span>
+                <span>1.0 (Meta)</span>
+                <span>1.5 (Adiantado)</span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden relative">
+                {/* 1.0 target tick */}
+                <div className="absolute left-[50%] top-0 bottom-0 w-0.5 bg-slate-400 z-10" />
+                <div 
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    spiStatus === 'green' ? 'bg-emerald-500' : spiStatus === 'yellow' ? 'bg-amber-500' : 'bg-red-500'
+                  }`} 
+                  style={{ width: `${Math.max(10, Math.min(100, ((spi - 0.5) / 1.0) * 100))}%` }} 
+                />
+              </div>
+            </div>
+            
+            <div className="text-[11px] text-slate-500 border-t border-slate-100 pt-3">
+              <strong className="text-slate-700">Cálculo Fiduciário:</strong> <code>EV / PV</code>. Reflete a velocidade do avanço material nos andares frente ao cronograma físico orçado.
+            </div>
+          </div>
+
+          {/* Predictor Dashboard / Forecast */}
+          <div className="bg-slate-900 border border-slate-800 text-slate-150 p-6 rounded-2xl shadow-sm space-y-4">
+            <div>
+              <h4 className="text-xs font-mono font-bold text-orange-400 uppercase tracking-widest flex items-center gap-1.55">
+                <Sparkles className="w-4 h-4 text-orange-400 animate-pulse animate-duration-1000" />
+                PROJEÇÃO NO TÉRMINO DA SPE (EAC - ISO 21508)
+              </h4>
+              <p className="text-[10px] text-slate-400 mt-1">Estimativa matemática de término fiduciário com base no histórico de produtividade.</p>
+            </div>
+
+            <div className="divide-y divide-slate-800 text-xs font-mono">
+              <div className="flex justify-between py-2.5">
+                <span className="text-slate-400">Capex Inicial (BAC):</span>
+                <strong>{formatReais(bac)}</strong>
+              </div>
+              <div className="flex justify-between py-2.5">
+                <span className="text-slate-400">Estimativa de Custo (EAC):</span>
+                <strong className={`font-bold ${vac < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {formatReais(eac)}
+                </strong>
+              </div>
+              <div className="flex justify-between py-2.5">
+                <span className="text-slate-400">Variação Real (VAC):</span>
+                <strong className={`font-black ${vac < 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {vac === 0 ? "Nenhum" : (vac > 0 ? "Economia: " : "Estouro: ") + formatReais(Math.abs(vac))}
+                </strong>
+              </div>
+            </div>
+
+            <div className="bg-slate-850 p-3.5 rounded-xl border border-slate-800 text-[10.5px] text-slate-400 font-sans leading-relaxed">
+              <strong>Análise Proporcional:</strong> {vac < 0 
+                ? `O estouro projetado de ${formatReais(Math.abs(vac))} decorre da perda de eficiência de canteiro. Se as medições do Sienge mantiverem o ritmo de custos de medição atual, o custo final da SPE subirá significativamente.`
+                : `A obra mantém-se dentro do limite esperado de custo de canteiro, assegurando o plano de margem líquida reflexa (CPC 18) de nossa viabilidade corporativa.`
+              }
+            </div>
+          </div>
+
+        </div>
+
+        {/* Detailed Variances Matrix */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="space-y-1">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">Linha de Base & Prumo de Desvios</h4>
+            <p className="text-xs text-slate-450">Tabela de apropriação de desvios lineares fiduciários acumulados no exercício de {buildiqData.activeDate}:</p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 font-mono text-[10px] text-slate-500 uppercase border-b border-slate-200">
+                <tr>
+                  <th className="py-2.5 px-3">Métrica de Variância</th>
+                  <th className="py-2.5 px-3 text-right">Valor em Reais (R$)</th>
+                  <th className="py-2.5 px-3">Interpretação e Plano de Ação recomendado para a JUST S.A.</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr>
+                  <td className="py-3 px-3 font-semibold text-slate-800">Variância de Custo (CV - Cost Variance)</td>
+                  <td className={`py-3 px-3 text-right font-mono font-bold ${cv >= 0 ? 'text-emerald-600' : 'text-red-650'}`}>
+                    {cv >= 0 ? '+' : ''}{formatReais(cv)}
+                  </td>
+                  <td className="py-3 px-3 text-slate-500 text-[11px] leading-snug">
+                    {cv >= 0 
+                      ? 'Nossa obra está gastando MENOS do que o valor do trabalho de fato agregado. Altamente satisfatório.' 
+                      : 'Nossa obra está gastando MAIS do que o valor do trabalho físico medido e agregado. Aponta custos intangíveis elevados, atrasos nos canteiros, ou perdas de materiais.'
+                    }
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-3 font-semibold text-slate-800">Variância de Prazo (SV - Schedule Variance)</td>
+                  <td className={`py-3 px-3 text-right font-mono font-bold ${sv >= 0 ? 'text-emerald-600' : 'text-indigo-650'}`}>
+                    {sv >= 0 ? '+' : ''}{formatReais(sv)}
+                  </td>
+                  <td className="py-3 px-3 text-slate-500 text-[11px] leading-snug">
+                    {sv >= 0 
+                      ? 'Desempenho físico adiantado frente ao planejamento do cronograma.' 
+                      : 'Desempenho físico atrasado frente ao cronograma planejado. Isto prolonga os custos fixos de manutenção de canteiro ("estouro por dilatação de tempo").'
+                    }
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div id="buildiq-module" className="space-y-8">
       {/* Top Title Bar */}
@@ -179,7 +452,7 @@ export default function BuildIQ({ obras, onBackToOverview }: BuildIQProps) {
       </div>
 
       {/* Segment Switcher Tabs */}
-      <div className="flex border-b border-slate-200 text-xs gap-6 font-sans">
+      <div className="flex border-b border-slate-200 text-xs gap-6 font-sans overflow-x-auto scrollbar-none">
         <button
           id="tab-feasibility"
           className={`py-3.5 font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
@@ -203,6 +476,18 @@ export default function BuildIQ({ obras, onBackToOverview }: BuildIQProps) {
         >
           <Grid className="w-4 h-4 text-orange-400" />
           Pastas de Medição Física & Índices (IPP / IPC)
+        </button>
+        <button
+          id="tab-evm"
+          className={`py-3.5 font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+            activeTab === 'evm'
+              ? 'border-orange-500 text-slate-950 font-black'
+              : 'border-transparent text-slate-450 hover:text-slate-800'
+          }`}
+          onClick={() => setActiveTab('evm')}
+        >
+          <Percent className="w-4 h-4 text-orange-500" />
+          Análise de Valor Agregado EVM (ISO 21508)
         </button>
       </div>
 
@@ -488,6 +773,8 @@ export default function BuildIQ({ obras, onBackToOverview }: BuildIQProps) {
 
             </div>
           </motion.div>
+        ) : activeTab === 'evm' ? (
+          renderEvmPage()
         ) : (
           <motion.div
             key="feasibility-section"

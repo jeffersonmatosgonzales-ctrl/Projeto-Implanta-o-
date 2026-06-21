@@ -39,7 +39,12 @@ export default function FinanceFlow({
   selectedSpeId,
   onSelectSPE
 }: FinanceFlowProps) {
-  const [activeTab, setActiveTab] = useState<'fc2026' | 'executivo' | 'ledger'>('fc2026');
+  const [activeTab, setActiveTab ] = useState<'fc2026' | 'executivo' | 'ledger' | 'stress'>('fc2026');
+  
+  // Stress Testing Simulation States
+  const [stressCostEscalation, setStressCostEscalation] = useState<number>(0); // % INCC inflation
+  const [stressPaymentDelay, setStressPaymentDelay] = useState<number>(0); // days
+  const [stressInadimplencia, setStressInadimplencia] = useState<number>(0); // % additional bad debt
   
   // FC 2026 specific states
   const [selectedEntityKey, setSelectedEntityKey] = useState<string>('CONSOLIDADO');
@@ -167,6 +172,324 @@ export default function FinanceFlow({
     { banco: "Particular (Sueli)", tipo: "Mútuo de Apoio", valorContratado: 600000, jurosNominal: "1.20% a.m.", amortizado: 180000, status: "Adimplente" }
   ];
 
+  const renderStressPage = () => {
+    // Fatores base consolidada da JUST
+    const baseEntradas = totals.entradas; // por ex, ~R$ 13.985.340
+    const baseSaidas = totals.saidas; // por ex, ~R$ 8.120.000
+    
+    // Serviço da dívida consolidado (bancos)
+    const bancoServiceMensal = 450000; // serviço de juros + amortização mensal ( Safra, Bradesco, Sicoob )
+    
+    // Impacto do Estresse nos Custos (Saídas): aumenta saídas de obras
+    const costFactor = 1 + (stressCostEscalation / 100);
+    // Impacto da Inadimplência/Atrasos de repasse (Entradas): reduz ou posterga entradas operacionais
+    const incomeFactor = 1 - (stressInadimplencia / 100) - (stressPaymentDelay === 0 ? 0 : stressPaymentDelay === 30 ? 0.08 : stressPaymentDelay === 60 ? 0.15 : 0.25);
+    
+    const stressedEntradas = baseEntradas * incomeFactor;
+    const stressedSaidas = baseSaidas * costFactor;
+    const stressedSaldoAcumulado = totals.saldoInicial + stressedEntradas - stressedSaidas;
+    
+    // DSCR = (stressedEntradas - operacionais) / servico da divida
+    const ebitdaFiduciario = Math.max(0, stressedEntradas - (stressedSaidas * 0.65));
+    const servicoDividaAnual = bancoServiceMensal * 12;
+    const dscr = servicoDividaAnual > 0 ? ebitdaFiduciario / servicoDividaAnual : 3.5;
+    
+    const covenantBroken = dscr < 1.25; // standard CRI limit is 1.25x or 1.20x
+    const caixadoGrupoRompido = stressedSaldoAcumulado < 0;
+
+    // Equivalência Patrimonial Reflexa (CPC 18):
+    // Como a variação societária da JUST (Blank 100%, Matera 85%, Neo 60%, Acácias 100%) consolida essa perda
+    const perdaMatera = (baseSaidas * (costFactor - 1) * 0.45) * 0.85; // Matera é 85% participada
+    const perdaBlank = (baseSaidas * (costFactor - 1) * 0.35) * 1.00; // Blank é 100%
+    const perdaNeo = (baseSaidas * (costFactor - 1) * 0.20) * 0.60; // Neo é 60%
+    const perdaTotalHoldingCPC18 = perdaMatera + perdaBlank + perdaNeo;
+
+    // Custos Médios Ponderados de Capital (WACC) explicativo
+    const wacc = 14.85;
+
+    return (
+      <motion.div
+        key="stress-testing-view"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="space-y-6"
+      >
+        {/* Top Header info */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-150">
+            <div className="space-y-1">
+              <span className="bg-orange-50 border border-orange-100 text-orange-800 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md tracking-wider">
+                SALA DE GUERRA CONTRA RISCOS DE CRÉDITO & LIQUIDEZ (CPC 18 / IFRS 15)
+              </span>
+              <h3 className="text-base font-bold text-slate-900 font-sans">Controladoria Avançada: Stress-Testing de Caixa e Covenants</h3>
+              <p className="text-xs text-slate-500">
+                Simulador de cenários estressados de liquidez fiduciária para proteger as SPEs e garantir aderência aos covenants contratuais vigentes.
+              </p>
+            </div>
+            <div className="bg-slate-950 border border-slate-800 px-4 py-2.5 rounded-xl text-right shrink-0">
+              <span className="text-[10px] font-mono text-slate-400 block">ESTRUTURA DE CAPITAL (WACC)</span>
+              <strong className="text-xs text-orange-400 font-mono">{wacc.toFixed(2)}% a.a.</strong>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+            
+            {/* INCC STRESSOR SLIDER */}
+            <div className="space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="flex justify-between text-xs font-bold text-slate-705">
+                <span className="flex items-center gap-1 text-slate-800 font-sans">
+                  📈 Escalada do INCC / Custos
+                </span>
+                <span className="text-orange-600 font-mono font-extrabold text-sm">+{stressCostEscalation}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="15" 
+                step="5"
+                value={stressCostEscalation} 
+                onChange={(e) => setStressCostEscalation(parseInt(e.target.value))}
+                className="w-full accent-orange-500 cursor-pointer h-2 bg-slate-200 rounded-lg"
+              />
+              <div className="flex justify-between text-[9px] font-mono text-slate-450">
+                <span>Base (Estável)</span>
+                <span>+5% (Histórico)</span>
+                <span>+10% (Alerta)</span>
+                <span>+15% (Hiper-inflação)</span>
+              </div>
+            </div>
+
+            {/* PAYMENT DELAY SLIDER */}
+            <div className="space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="flex justify-between text-xs font-bold text-slate-705">
+                <span className="flex items-center gap-1 text-slate-800 font-sans">
+                  ⏳ Atraso de Repasse (Mês de Produção)
+                </span>
+                <span className="text-orange-600 font-mono font-extrabold text-sm">{stressPaymentDelay} dias</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="90" 
+                step="30"
+                value={stressPaymentDelay} 
+                onChange={(e) => setStressPaymentDelay(parseInt(e.target.value))}
+                className="w-full accent-orange-500 cursor-pointer h-2 bg-slate-200 rounded-lg"
+              />
+              <div className="flex justify-between text-[9px] font-mono text-slate-450">
+                <span>0 dias (Liquidez)</span>
+                <span>30 d (Trâmite)</span>
+                <span>60 d (Gargalo fidi.)</span>
+                <span>90 d (Crise Bradesco)</span>
+              </div>
+            </div>
+
+            {/* CUSTOMER DEFAULT SLIDER */}
+            <div className="space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="flex justify-between text-xs font-bold text-slate-705">
+                <span className="flex items-center gap-1 text-slate-800 font-sans">
+                  📉 Adicional de Distrato / Inadimplência
+                </span>
+                <span className="text-orange-600 font-mono font-extrabold text-sm">+{stressInadimplencia}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="20" 
+                step="5"
+                value={stressInadimplencia} 
+                onChange={(e) => setStressInadimplencia(parseInt(e.target.value))}
+                className="w-full accent-orange-500 cursor-pointer h-2 bg-slate-200 rounded-lg"
+              />
+              <div className="flex justify-between text-[9px] font-mono text-slate-450">
+                <span>0% (Planilha)</span>
+                <span>5% (Mora)</span>
+                <span>10% (Alerta CRI)</span>
+                <span>20% (Ruptura Geral)</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Real-Time Stress Results Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Stressed Cash Balance */}
+          <div className={`bg-white p-5 rounded-2xl border ${caixadoGrupoRompido ? 'border-red-500/30 ring-1 ring-red-500/10' : 'border-slate-200'} shadow-sm space-y-1.5 transition`}>
+            <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Saldo Consolidado Sob Estresse</span>
+            <div className={`text-xl font-bold font-mono ${caixadoGrupoRompido ? 'text-red-650' : 'text-slate-900'}`}>
+              {formatReais(stressedSaldoAcumulado)}
+            </div>
+            <div className="flex justify-between text-[10px] text-slate-500 border-t border-slate-100 pt-1.5">
+              <span>Fluxo Original:</span>
+              <span className="font-mono">{formatReais(totals.saldoAcumulado)}</span>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">Saldo cumulativo de caixa após deduzir o desgaste de custos adicionais.</p>
+          </div>
+
+          {/* covenant DSCR card */}
+          <div className={`bg-white p-5 rounded-2xl border ${covenantBroken ? 'border-red-500/30' : 'border-emerald-500/20'} shadow-sm space-y-1.5 transition`}>
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] font-mono text-slate-400 block uppercase font-bold">Índice DSCR (ICSD)</span>
+              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-black ${covenantBroken ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                {covenantBroken ? 'BRECHA COVENANT' : 'ADIMPLENTE'}
+              </span>
+            </div>
+            <div className={`text-xl font-extrabold font-mono ${covenantBroken ? 'text-red-650' : 'text-emerald-600'}`}>
+              {dscr.toFixed(2)}x
+            </div>
+            <div className="flex justify-between text-[10px] text-slate-500 border-t border-slate-100 pt-1.5">
+              <span>Limite CRI Mínimo:</span>
+              <strong className="font-mono">1.25x</strong>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">Mede se a margem fiduciária cobre o pagamento devido do serviço da dívida anual.</p>
+          </div>
+
+          {/* Equivalent Loss reflection */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
+            <span className="text-[10px] font-mono text-slate-400 block uppercase font-semibold">Prejuízo Reflexo da Holding (CPC 18)</span>
+            <div className={`text-xl font-mono font-bold ${perdaTotalHoldingCPC18 > 0 ? 'text-amber-600' : 'text-slate-800'}`}>
+              {perdaTotalHoldingCPC18 > 0 ? `-${formatReais(perdaTotalHoldingCPC18)}` : 'R$ 0'}
+            </div>
+            <div className="flex justify-between text-[10px] text-slate-500 border-t border-slate-100 pt-1.5">
+              <span>Holding:</span>
+              <span>Blank 100%, Matera 85%, Neo 60%</span>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">Consolidação por equivalência patrimonial proporcional ao direito societário real da JUST.</p>
+          </div>
+
+          {/* Cash Breakeven delay */}
+          <div className="bg-slate-900 border border-slate-800 text-white p-5 rounded-2xl shadow-sm space-y-1.5">
+            <span className="text-[10px] font-mono text-orange-400 block uppercase font-bold">Estágio de Ruptura / Estilo de Caixa</span>
+            <div className={`text-base font-bold font-mono tracking-tight ${caixadoGrupoRompido ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+              {caixadoGrupoRompido ? 'RUPTURA: SETEMBRO/26' : 'Liquidez Sustentada 2026'}
+            </div>
+            <div className="flex justify-between text-[10px] text-slate-400 border-t border-slate-800 pt-1.5">
+              <span>Desconto Operações:</span>
+              <span className="text-orange-400 font-extrabold">-{Math.round((1 - incomeFactor) * 100)}% Receitas</span>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-tight">Horizonte limite para o caixa tolerar os fatores acumulados de estresse financeiro.</p>
+          </div>
+
+        </div>
+
+        {/* Sensitivity & Accounting Simulation Analysis Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-sm">
+            <h4 className="text-sm font-bold text-slate-900 font-sans flex items-center gap-1.5">
+              <Coins className="w-4 h-4 text-orange-500" />
+              Matriz de Sensibilidade do Portfólio de SPEs
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 font-mono text-[9px] text-slate-500 border-b border-slate-200 uppercase">
+                  <tr>
+                    <th className="py-2.5 px-3">Sociedade de Propósito Específico (SPE)</th>
+                    <th className="py-2.5 px-3 text-right">Participação Societária (Consolidação)</th>
+                    <th className="py-2.5 px-3 text-right">Perda Operacional Incorrida</th>
+                    <th className="py-2.5 px-3 text-right">Impacto Reflexo Consolidado (CPC 18)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-sans">
+                  <tr>
+                    <td className="py-3 px-3 font-semibold text-slate-800">SPE Matera Residence Ltda</td>
+                    <td className="py-3 px-3 text-right font-mono font-medium">85.00%</td>
+                    <td className="py-3 px-3 text-right font-mono text-amber-600">-{formatReais(baseSaidas * (costFactor - 1) * 0.45)}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-800">-{formatReais(perdaMatera)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-3 font-semibold text-slate-800">SPE Blank Residence Ltda</td>
+                    <td className="py-3 px-3 text-right font-mono font-medium">100.00%</td>
+                    <td className="py-3 px-3 text-right font-mono text-amber-600">-{formatReais(baseSaidas * (costFactor - 1) * 0.35)}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-800">-{formatReais(perdaBlank)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-3 font-semibold text-slate-800">SPE Neo Residence Ltda</td>
+                    <td className="py-3 px-3 text-right font-mono font-medium">60.00%</td>
+                    <td className="py-3 px-3 text-right font-mono text-amber-600">-{formatReais(baseSaidas * (costFactor - 1) * 0.20)}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-800">-{formatReais(perdaNeo)}</td>
+                  </tr>
+                  <tr className="bg-slate-50 font-bold border-t border-slate-200 font-sans">
+                    <td className="py-3 px-3 text-slate-900">Total Consolidado de Prumo</td>
+                    <td className="py-3 px-3 text-right">—</td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-700">-{formatReais(baseSaidas * (costFactor - 1))}</td>
+                    <td className="py-3 px-3 text-right font-mono text-orange-600">-{formatReais(perdaTotalHoldingCPC18)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-150 text-[11px] text-slate-500 leading-relaxed font-sans mt-3 space-y-1.5">
+              <strong className="text-slate-800">Interpretação fiduciária do CPC 18 (Método de Equivalência Patrimonial):</strong>
+              <p>
+                Os resultados líquidos operacionais gerados em cada SPE na prestação fiduciária não transitam imediatamente na conta de Caixa da holding Just S.A. como dividendos líquidos pagos até que atinjam a maturidade de repasse de obra. No entanto, por razões de padrão de auditoria internacional (IFRS 11 / IFRS 15), a flutuação de Capex sofrida em canteiro reduz os ativos de investimentos societários da controladora por **equivalência patrimonial reflexa**.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            
+            {/* Covenant Compliance Dossier */}
+            <div className={`p-5 rounded-2xl text-xs space-y-3 transition ${covenantBroken ? 'bg-red-50 border border-red-200 text-red-800' : 'bg-emerald-50 border border-emerald-250 text-emerald-850'}`}>
+              <div className="flex items-center gap-2 font-bold font-sans uppercase">
+                <Sliders className="w-5 h-5 text-orange-500 shrink-0" />
+                Dossiê de Conformidade Contábil
+              </div>
+              <div className="text-[11px] leading-relaxed space-y-2">
+                <p>
+                  <strong>Situação do Covenant do CRI:</strong> O contrato de securitização imobiliária assinado pelo Grupo JUST exige a manutenção de um ICSD/DSCR mínimo acumulado de <strong className="font-extrabold">1.25x</strong> verificado trimestralmente.
+                </p>
+                {covenantBroken ? (
+                  <p className="text-red-700 font-medium">
+                    🚨 <strong>ALERTA DE ROMPIMENTO:</strong> Sob este estresse financeiro, o índice fiduciário projetado de <strong>{dscr.toFixed(2)}x</strong> rombe a exigência do investidor (covenant). Isto dá ensejo à cláusula de <strong className="font-bold underline">vencimento antecipado das obrigações</strong> ou amortização compulsória do VGV das SPEs para as contas centralizadas fiduciárias.
+                  </p>
+                ) : (
+                  <p className="text-emerald-700 font-medium">
+                    ✅ <strong>ADIMPLÊNCIA GARANTIDA:</strong> Sob este nível de estresse simulado, o caixa gerencial e a margem operacional das SPEs resistem, mantendo o DSCR em <strong>{dscr.toFixed(2)}x</strong> (acima do gatilho contratual de 1.25x). O portfólio está fiduciariamente protegido!
+                  </p>
+                )}
+                <p className="pt-2 border-t border-slate-200 text-[10.5px]">
+                  <strong>Ações recomendadas pelo CFO Jefferson Gonzales:</strong> Estruturar retenção preventiva de caixa operacional nas SPEs, travar compras de insumos por contratos de lote fixo (Hedge de INCC), e priorizar repasses bancários das unidades já edificadas do Matera.
+                </p>
+              </div>
+            </div>
+
+            {/* WACC breakdown card */}
+            <div className="bg-slate-900 border border-slate-800 text-slate-100 p-5 rounded-2xl text-xs space-y-3.5">
+              <span className="font-mono text-[10px] text-orange-400 font-bold uppercase tracking-wider block">WACC (Weighted Average Cost of Capital)</span>
+              
+              <div className="divide-y divide-slate-800 text-[11px] font-mono leading-normal">
+                <div className="flex justify-between py-1.5">
+                  <span className="text-slate-400">Custo do Capital Próprio (Ke):</span>
+                  <span>18.00% a.a.</span>
+                </div>
+                <div className="flex justify-between py-1.5">
+                  <span className="text-slate-400">Custo de Terceiros (Kd líquido):</span>
+                  <span>11.10% a.a.</span>
+                </div>
+                <div className="flex justify-between py-1.5">
+                  <span className="text-slate-400">Proporção Capital Próprio / Terceiros:</span>
+                  <span>55% / 45%</span>
+                </div>
+                <div className="flex justify-between py-1.5 font-bold pt-2 text-orange-300">
+                  <span>WACC Consolidado JUST:</span>
+                  <span>14.85% a.a.</span>
+                </div>
+              </div>
+
+              <p className="text-[10px] leading-relaxed text-slate-400 font-sans italic pt-1 border-t border-slate-800">
+                O WACC de 14.85% define nossa Taxa de Desconto de Prumo recomendada para estudos comparativos de viabilidade econômica de novos lançamentos de SPEs de engenharia.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div id="financeflow-module" className="space-y-8">
       {/* Header Panel */}
@@ -185,10 +508,10 @@ export default function FinanceFlow({
         </div>
 
         {/* Level Toggles */}
-        <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs self-start shrink-0">
+        <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs self-start shrink-0 gap-1 overflow-x-auto max-w-full">
           <button 
             id="tab-fc2026"
-            className={`px-4 py-2 rounded-lg transition font-semibold flex items-center gap-1.5 ${activeTab === 'fc2026' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-850'}`}
+            className={`px-4 py-2 rounded-lg transition font-semibold flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'fc2026' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-850'}`}
             onClick={() => setActiveTab('fc2026')}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -196,7 +519,7 @@ export default function FinanceFlow({
           </button>
           <button 
             id="tab-executivo"
-            className={`px-4 py-2 rounded-lg transition font-semibold flex items-center gap-1.5 ${activeTab === 'executivo' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-850'}`}
+            className={`px-4 py-2 rounded-lg transition font-semibold flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'executivo' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-850'}`}
             onClick={() => setActiveTab('executivo')}
           >
             <FileCheck2 className="w-3.5 h-3.5" />
@@ -204,11 +527,19 @@ export default function FinanceFlow({
           </button>
           <button 
             id="tab-ledger"
-            className={`px-4 py-2 rounded-lg transition font-semibold flex items-center gap-1.5 ${activeTab === 'ledger' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-850'}`}
+            className={`px-4 py-2 rounded-lg transition font-semibold flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'ledger' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-855'}`}
             onClick={() => setActiveTab('ledger')}
           >
             <History className="w-3.5 h-3.5" />
-            Extrado Contábil Geral
+            Extrato Contábil Geral
+          </button>
+          <button 
+            id="tab-stress"
+            className={`px-4 py-2 rounded-lg transition font-semibold flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'stress' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-850'}`}
+            onClick={() => setActiveTab('stress')}
+          >
+            <Sliders className="w-3.5 h-3.5 text-orange-500" />
+            Estresse & Covenants (Controladoria)
           </button>
         </div>
       </div>
@@ -843,6 +1174,8 @@ export default function FinanceFlow({
 
         </div>
       )}
+
+      {activeTab === 'stress' && renderStressPage()}
     </div>
   );
 }
